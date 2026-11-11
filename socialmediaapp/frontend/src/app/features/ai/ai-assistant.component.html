@@ -1,0 +1,264 @@
+<div class="ai">
+  <header class="ai-hero">
+    <div class="ai-hero-text">
+      <h1>AI Content Assistant</h1>
+      <p>One idea in — platform-ready posts, hashtags, titles and translations out.</p>
+    </div>
+    @if (lastProvider()) {
+      <span class="ai-provider-badge" title="Which AI model answered">
+        ⚡ {{ lastProvider() | titlecase }}
+      </span>
+    }
+  </header>
+
+  @if (configLoading()) {
+    <div class="ai-panel"><p class="ai-muted">Checking AI availability…</p></div>
+  } @else if (configError()) {
+    <!-- The capability probe failed — don't mislabel this as "switched off" -->
+    <div class="ai-panel ai-unavailable">
+      <h2>Couldn't reach the AI service</h2>
+      <p>
+        We couldn't check the AI assistant's status. The backend may be down or
+        unreachable from this network. Please try again shortly.
+      </p>
+      <a class="ai-btn ghost" routerLink="/support">Contact support</a>
+    </div>
+  } @else if (!available()) {
+    <!-- Feature off or not configured -->
+    <div class="ai-panel ai-unavailable">
+      <h2>AI assistant is unavailable</h2>
+      @if (cfg() && !cfg()!.enabled) {
+        <p>The AI assistant is currently switched off. An administrator can enable it (AI_ENABLED).</p>
+      } @else {
+        <p>
+          The AI assistant isn't configured yet. An administrator needs to add a
+          Google Gemini or OpenRouter API key.
+        </p>
+      }
+      <a class="ai-btn ghost" routerLink="/support">Contact support</a>
+    </div>
+  } @else if (planBlocked()) {
+    <!-- Feature is available, but the customer's plan doesn't include it -->
+    <div class="ai-panel ai-unavailable">
+      <h2>✨ Upgrade to unlock the AI Assistant</h2>
+      <p>
+        The AI Content Assistant is included on the <strong>Pro</strong> and
+        <strong>Agency</strong> plans. Your current plan{{ cfg()?.plan ? ' (' + (cfg()!.plan | titlecase) + ')' : '' }}
+        doesn't include it yet.
+      </p>
+      <p class="ai-muted">
+        Generate platform-ready posts, rewrites, hashtags, titles and translations
+        from a single idea.
+      </p>
+      <a class="ai-btn primary" routerLink="/billing">See plans &amp; upgrade</a>
+    </div>
+  } @else {
+    <!-- Tool tabs -->
+    <div class="ai-tabs" role="tablist">
+      @for (t of tabs; track t.key) {
+        <button
+          type="button"
+          role="tab"
+          class="ai-tab"
+          [class.active]="active() === t.key"
+          [attr.aria-selected]="active() === t.key"
+          (click)="setActive(t.key)"
+        >
+          <span class="ai-tab-icon">{{ t.icon }}</span>
+          <span>{{ t.label }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="ai-grid">
+      <!-- Left: input + options -->
+      <section class="ai-panel ai-input">
+        <p class="ai-tool-blurb">{{ activeTab().blurb }}</p>
+
+        <label class="ai-label" for="ai-content">Your content</label>
+        <textarea
+          id="ai-content"
+          class="ai-textarea"
+          rows="8"
+          placeholder="Paste a post, an idea, or a product description…"
+          [ngModel]="content()"
+          (ngModelChange)="content.set($event)"
+        ></textarea>
+        <div class="ai-charcount">{{ content().length }} / 6000</div>
+
+        <!-- Per-tool options -->
+        @switch (active()) {
+          @case ('platform') {
+            <label class="ai-label">Platforms</label>
+            <div class="ai-chips">
+              @for (p of allPlatforms; track p) {
+                <button
+                  type="button"
+                  class="ai-chip"
+                  [class.on]="isPlatformSelected(p)"
+                  (click)="togglePlatform(p)"
+                >
+                  {{ p | titlecase }}
+                </button>
+              }
+            </div>
+            <label class="ai-label" for="ai-ptone">Tone (optional)</label>
+            <select id="ai-ptone" class="ai-select" [ngModel]="platformTone()" (ngModelChange)="platformTone.set($event)">
+              <option value="">Default</option>
+              @for (tn of tones; track tn) {
+                <option [value]="tn">{{ tn | titlecase }}</option>
+              }
+            </select>
+          }
+          @case ('rewrite') {
+            <label class="ai-label" for="ai-rtone">Tone</label>
+            <select id="ai-rtone" class="ai-select" [ngModel]="rewriteTone()" (ngModelChange)="rewriteTone.set($event)">
+              @for (tn of tones; track tn) {
+                <option [value]="tn">{{ tn | titlecase }}</option>
+              }
+            </select>
+          }
+          @case ('titles') {
+            <label class="ai-label" for="ai-count">How many titles</label>
+            <input
+              id="ai-count"
+              class="ai-select"
+              type="number"
+              min="3"
+              max="15"
+              [ngModel]="titleCount()"
+              (ngModelChange)="titleCount.set($event)"
+            />
+          }
+          @case ('translate') {
+            <label class="ai-label" for="ai-lang">Target language</label>
+            <input
+              id="ai-lang"
+              class="ai-select"
+              list="ai-langs"
+              placeholder="e.g. French, isiZulu, Spanish"
+              [ngModel]="targetLanguage()"
+              (ngModelChange)="targetLanguage.set($event)"
+            />
+            <datalist id="ai-langs">
+              @for (l of commonLanguages; track l) {
+                <option [value]="l"></option>
+              }
+            </datalist>
+          }
+          @case ('ctas') {
+            <label class="ai-label" for="ai-goal">Goal (optional)</label>
+            <input
+              id="ai-goal"
+              class="ai-select"
+              placeholder="e.g. drive sign-ups, book demos"
+              [ngModel]="ctaGoal()"
+              (ngModelChange)="ctaGoal.set($event)"
+            />
+          }
+          @case ('expand') {
+            <label class="ai-label" for="ai-eformat">Expand into</label>
+            <select id="ai-eformat" class="ai-select" [ngModel]="expandFormat()" (ngModelChange)="expandFormat.set($event)">
+              @for (f of expandFormats; track f.value) {
+                <option [value]="f.value">{{ f.label }}</option>
+              }
+            </select>
+            <label class="ai-label" for="ai-etone">Tone (optional)</label>
+            <select id="ai-etone" class="ai-select" [ngModel]="expandTone()" (ngModelChange)="expandTone.set($event)">
+              <option value="">Default</option>
+              @for (tn of tones; track tn) {
+                <option [value]="tn">{{ tn | titlecase }}</option>
+              }
+            </select>
+          }
+          @case ('shorten') {
+            <label class="ai-label" for="ai-sformat">Shorten into</label>
+            <select id="ai-sformat" class="ai-select" [ngModel]="shortenFormat()" (ngModelChange)="shortenFormat.set($event)">
+              @for (f of shortenFormats; track f.value) {
+                <option [value]="f.value">{{ f.label }}</option>
+              }
+            </select>
+          }
+          @case ('pack') {
+            <label class="ai-label">Platforms</label>
+            <div class="ai-chips">
+              @for (p of allPlatforms; track p) {
+                <button
+                  type="button"
+                  class="ai-chip"
+                  [class.on]="isPlatformSelected(p)"
+                  (click)="togglePlatform(p)"
+                >
+                  {{ p | titlecase }}
+                </button>
+              }
+            </div>
+            <label class="ai-label" for="ai-packtone">Tone (optional)</label>
+            <select id="ai-packtone" class="ai-select" [ngModel]="packTone()" (ngModelChange)="packTone.set($event)">
+              <option value="">Default</option>
+              @for (tn of tones; track tn) {
+                <option [value]="tn">{{ tn | titlecase }}</option>
+              }
+            </select>
+          }
+        }
+
+        <button class="ai-btn primary" [disabled]="busy()" (click)="run()">
+          {{ busy() ? 'Generating…' : 'Generate' }}
+        </button>
+      </section>
+
+      <!-- Right: output -->
+      <section class="ai-panel ai-output">
+        <div class="ai-output-head">
+          <h2>Results</h2>
+          @if (outputs().length > 1) {
+            <button class="ai-btn ghost sm" (click)="copyAll()">Copy all</button>
+          }
+        </div>
+
+        @if (busy()) {
+          <p class="ai-muted">Asking the AI…</p>
+        } @else if (!outputs().length && !analysis()) {
+          <p class="ai-muted">Your generated content will appear here.</p>
+        } @else {
+          <!-- Content-analysis scorecard (Analyze tool) -->
+          @if (analysis(); as a) {
+            <div class="ai-scores">
+              <div class="ai-score">
+                <span class="ai-score-num">{{ a.overall }}</span>
+                <span class="ai-score-label">Overall</span>
+              </div>
+              <div class="ai-score">
+                <span class="ai-score-num">{{ a.clarity }}</span>
+                <span class="ai-score-label">Clarity</span>
+              </div>
+              <div class="ai-score">
+                <span class="ai-score-num">{{ a.readability }}</span>
+                <span class="ai-score-label">Readability</span>
+              </div>
+              <div class="ai-score">
+                <span class="ai-score-num">{{ a.engagement }}</span>
+                <span class="ai-score-label">Engagement</span>
+              </div>
+            </div>
+            @if (a.summary) {
+              <p class="ai-score-summary">{{ a.summary }}</p>
+            }
+          }
+          <div class="ai-cards">
+            @for (o of outputs(); track o.label) {
+              <article class="ai-card">
+                <div class="ai-card-head">
+                  <span class="ai-card-label">{{ o.label }}</span>
+                  <button class="ai-copy" (click)="copy(o.text)" title="Copy">⧉ Copy</button>
+                </div>
+                <p class="ai-card-text">{{ o.text }}</p>
+              </article>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+</div>

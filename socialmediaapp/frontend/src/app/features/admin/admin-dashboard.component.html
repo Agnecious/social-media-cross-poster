@@ -1,0 +1,364 @@
+<div class="admin-dash">
+  <header class="dash-topbar">
+    <div class="dash-title">
+      <h1>Admin Dashboard</h1>
+      <p class="dash-sub">Business overview — customers, traffic, and plans.</p>
+    </div>
+    <a class="btn ghost small" routerLink="/admin">Platform config →</a>
+  </header>
+
+  @if (loading()) {
+    <div class="dash-panel"><p class="muted">Loading…</p></div>
+  } @else if (error()) {
+    <div class="dash-panel"><p class="error">{{ error() }}</p></div>
+  } @else if (stats(); as s) {
+    <!-- System status -->
+    @if (health(); as h) {
+      <section class="dash-panel">
+        <div class="panel-head">
+          <h2>System status</h2>
+          <span class="status-pill" [class.online]="h.ready" [class.offline]="!h.ready">
+            <span class="status-dot"></span>{{ h.ready ? 'Operational' : 'Degraded' }}
+          </span>
+        </div>
+        <div class="health-grid">
+          @if (h.checks.database; as db) {
+            <div class="health-item" [class.up]="db.ok" [class.down]="!db.ok">
+              <span class="health-label">Database</span>
+              <span class="health-value">{{ db.ok ? 'Up' : 'Down' }}@if (db.latencyMs != null) { · {{ db.latencyMs }} ms }</span>
+            </div>
+          }
+          @if (h.checks.supabase; as sb) {
+            <div
+              class="health-item"
+              [class.up]="sb.configured && sb.reachable !== false"
+              [class.down]="!sb.configured || sb.reachable === false"
+            >
+              <span class="health-label">Supabase (customer auth)</span>
+              @if (!sb.configured) {
+                <span class="health-value">Not configured</span>
+              } @else if (sb.reachable === false) {
+                <span class="health-value">Unreachable</span>
+                <span class="health-warn">
+                  ⚠ Backend can't reach Supabase{{ sb.reason ? ' (' + sb.reason + ')' : '' }} —
+                  customer sign-in, billing &amp; connect will fail from this network.
+                </span>
+              } @else if (sb.reachable === true) {
+                <span class="health-value">Reachable{{ sb.latencyMs != null ? ' · ' + sb.latencyMs + ' ms' : '' }}</span>
+              } @else {
+                <span class="health-value">Configured</span>
+              }
+            </div>
+          }
+          @if (h.checks.ai; as ai) {
+            <div
+              class="health-item"
+              [class.up]="!ai.enabled || (ai.configured && ai.reachable !== false)"
+              [class.down]="ai.enabled && (!ai.configured || ai.reachable === false)"
+            >
+              <span class="health-label">AI assistant</span>
+              @if (!ai.enabled) {
+                <span class="health-value">Off</span>
+              } @else if (!ai.configured) {
+                <span class="health-value">No provider key</span>
+                <span class="health-warn">
+                  ⚠ AI is on but no Gemini/OpenRouter key is set — the assistant can't run.
+                </span>
+              } @else if (ai.reachable === false) {
+                <span class="health-value">Unreachable</span>
+                <span class="health-warn">
+                  ⚠ Backend can't reach the AI provider{{ ai.reason ? ' (' + ai.reason + ')' : '' }} —
+                  AI generations will fail from this network.
+                </span>
+              } @else if (ai.reachable === true) {
+                <span class="health-value">
+                  Reachable{{ ai.provider ? ' · ' + ai.provider : '' }}{{ ai.latencyMs != null ? ' · ' + ai.latencyMs + ' ms' : '' }}
+                </span>
+              } @else {
+                <span class="health-value">Configured</span>
+              }
+            </div>
+          }
+          <div class="health-item">
+            <span class="health-label">Uptime</span>
+            <span class="health-value">{{ uptimePretty(h.metrics.uptimeSeconds) }}</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">Version</span>
+            <span class="health-value">{{ h.metrics.version }}</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">Memory</span>
+            <span class="health-value">{{ h.metrics.memory.heapUsedMb }}/{{ h.metrics.memory.rssMb }} MB</span>
+          </div>
+          <div class="health-item">
+            <span class="health-label">Node</span>
+            <span class="health-value">{{ h.metrics.nodeVersion }}</span>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Revenue headline -->
+    @if (s.revenue; as rev) {
+      <div class="revenue-banner">
+        <div class="revenue-main">
+          <span class="revenue-label">Monthly recurring revenue</span>
+          <span class="revenue-value">{{ formatZar(rev.mrrZar) }}</span>
+          <span class="revenue-sub">
+            from {{ rev.payingCustomers | number }} active subscription(s) · annualised ≈ {{ formatZar(rev.mrrZar * 12) }}
+          </span>
+        </div>
+        <span class="revenue-icon">💰</span>
+      </div>
+    }
+
+    <!-- Customer + traffic stat cards -->
+    <div class="stat-grid">
+      <div class="stat accent-primary"><span class="stat-value">{{ s.customers.total | number }}</span><span class="stat-label">Total customers</span></div>
+      <div class="stat accent-green"><span class="stat-value">{{ s.customers.active30d | number }}</span><span class="stat-label">Active (30 days)</span></div>
+      <div class="stat accent-violet"><span class="stat-value">{{ s.customers.newThisMonth | number }}</span><span class="stat-label">New this month</span></div>
+      <div class="stat accent-amber"><span class="stat-value">{{ s.traffic.signups7d | number }}</span><span class="stat-label">Signups (7 days)</span></div>
+      <div class="stat accent-cyan"><span class="stat-value">{{ s.traffic.pageviewsToday | number }}</span><span class="stat-label">Page views today</span></div>
+      <div class="stat accent-cyan"><span class="stat-value">{{ s.traffic.pageviews7d | number }}</span><span class="stat-label">Page views (7 days)</span></div>
+      <div class="stat accent-cyan"><span class="stat-value">{{ s.traffic.pageviews30d | number }}</span><span class="stat-label">Page views (30 days)</span></div>
+    </div>
+
+    <!-- Plan breakdown -->
+    <section class="dash-panel">
+      <div class="panel-head"><h2>Plans</h2></div>
+      <div class="plan-chips">
+        @for (p of planEntries(); track p.plan) {
+          <span class="plan-chip">
+            <strong>{{ p.count | number }}</strong> {{ p.plan | titlecase }}
+          </span>
+        }
+      </div>
+    </section>
+
+    <!-- Customer table -->
+    <section class="dash-panel">
+      <div class="panel-head">
+        <h2>Customers</h2>
+        <span class="count-badge">{{ customers().length | number }}</span>
+        @if (customers().length > 0) {
+          <label class="page-size">
+            Show
+            <select
+              [ngModel]="customerPageSize()"
+              (ngModelChange)="setCustomerPageSize(+$event)"
+              name="customer-page-size"
+            >
+              @for (size of customerPageSizes; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+            per page
+          </label>
+        }
+        <button class="btn primary small add-user-btn" (click)="toggleAddUser()">
+          {{ showAddUser() ? 'Close' : '+ Add user' }}
+        </button>
+      </div>
+
+      <!-- Add-user form -->
+      @if (showAddUser()) {
+        <div class="add-user-form">
+          <div class="add-user-grid">
+            <label class="field">
+              <span class="field-label">Email *</span>
+              <input type="email" autocomplete="off" [ngModel]="newUser().email" (ngModelChange)="setNewUser('email', $event)" />
+            </label>
+            <label class="field">
+              <span class="field-label">Temp password *</span>
+              <input type="text" autocomplete="off" placeholder="min 6 chars" [ngModel]="newUser().password" (ngModelChange)="setNewUser('password', $event)" />
+            </label>
+            <label class="field">
+              <span class="field-label">First name</span>
+              <input type="text" autocomplete="off" [ngModel]="newUser().firstName" (ngModelChange)="setNewUser('firstName', $event)" />
+            </label>
+            <label class="field">
+              <span class="field-label">Last name</span>
+              <input type="text" autocomplete="off" [ngModel]="newUser().lastName" (ngModelChange)="setNewUser('lastName', $event)" />
+            </label>
+            <label class="field">
+              <span class="field-label">Phone</span>
+              <input type="tel" autocomplete="off" [ngModel]="newUser().phone" (ngModelChange)="setNewUser('phone', $event)" />
+            </label>
+            <label class="field">
+              <span class="field-label">Plan</span>
+              <select [ngModel]="newUser().plan" (ngModelChange)="setNewUser('plan', $event)" name="new-user-plan">
+                <option value="">Default (Starter)</option>
+                @for (p of plans(); track p) {
+                  <option [value]="p">{{ p | titlecase }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="add-user-actions">
+            <button class="btn primary" [disabled]="!canAddUser() || addingUser()" (click)="addUser()">
+              {{ addingUser() ? 'Creating…' : 'Create customer' }}
+            </button>
+            <span class="hint">Creates a Supabase login + record; email is auto-confirmed so they can sign in with this password.</span>
+          </div>
+        </div>
+      }
+      @if (customers().length === 0) {
+        <p class="muted">No customers yet.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Joined</th>
+                <th class="num">Accounts</th>
+                <th class="num">Posts</th>
+                <th>Plan</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of customerPageRows(); track c.id) {
+                <tr>
+                  <td>{{ ((c.firstName || '') + ' ' + (c.lastName || '')).trim() || '—' }}</td>
+                  <td class="cell-muted">{{ c.email }}</td>
+                  <td class="cell-muted">{{ c.phone || '—' }}</td>
+                  <td class="cell-muted">{{ c.createdAt | date: 'mediumDate' }}</td>
+                  <td class="num">{{ c.accounts }}</td>
+                  <td class="num">{{ c.posts }}</td>
+                  <td>
+                    <select
+                      class="plan-select"
+                      [ngModel]="c.plan"
+                      (ngModelChange)="changePlan(c, $event)"
+                      [disabled]="savingId() === c.id"
+                      name="plan-{{ c.id }}"
+                    >
+                      @for (p of planOptionsFor(c); track p) {
+                        <option [value]="p">{{ p | titlecase }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td class="num">
+                    <button
+                      class="btn ghost small danger-btn"
+                      [disabled]="savingId() === c.id"
+                      (click)="deleteUser(c)"
+                      title="Delete customer"
+                    >
+                      {{ savingId() === c.id ? '…' : 'Delete' }}
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pager">
+          <span class="pager-info">
+            Showing {{ customerRangeStart() | number }}–{{ customerRangeEnd() | number }}
+            of {{ customers().length | number }}
+          </span>
+          <div class="pager-controls">
+            <button
+              class="btn ghost small"
+              [disabled]="customerPage() <= 1"
+              (click)="goToCustomerPage(customerPage() - 1)"
+            >
+              ← Prev
+            </button>
+            <span class="pager-page">Page {{ customerPage() }} of {{ customerTotalPages() }}</span>
+            <button
+              class="btn ghost small"
+              [disabled]="customerPage() >= customerTotalPages()"
+              (click)="goToCustomerPage(customerPage() + 1)"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- Audit log -->
+    <section class="dash-panel">
+      <div class="panel-head">
+        <h2>Audit log</h2>
+        <span class="count-badge">{{ audit().length | number }}</span>
+        @if (audit().length > 0) {
+          <label class="page-size">
+            Show
+            <select
+              [ngModel]="auditPageSize()"
+              (ngModelChange)="setAuditPageSize(+$event)"
+              name="audit-page-size"
+            >
+              @for (size of auditPageSizes; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+            per page
+          </label>
+        }
+      </div>
+      @if (audit().length === 0) {
+        <p class="muted">No audit entries yet.</p>
+      } @else {
+        <div class="table-wrap">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>When</th>
+                <th>Actor</th>
+                <th>Action</th>
+                <th>Target</th>
+                <th>Detail</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of auditPageRows(); track e.id) {
+                <tr>
+                  <td class="cell-muted">{{ e.createdAt | date: 'short' }}</td>
+                  <td>{{ auditActor(e) }}</td>
+                  <td><code class="action-tag">{{ e.action }}</code></td>
+                  <td>{{ auditTarget(e) }}</td>
+                  <td class="cell-muted">{{ auditDetail(e) || '—' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pager">
+          <span class="pager-info">
+            Showing {{ auditRangeStart() | number }}–{{ auditRangeEnd() | number }}
+            of {{ audit().length | number }}
+          </span>
+          <div class="pager-controls">
+            <button
+              class="btn ghost small"
+              [disabled]="auditPage() <= 1"
+              (click)="goToAuditPage(auditPage() - 1)"
+            >
+              ← Prev
+            </button>
+            <span class="pager-page">Page {{ auditPage() }} of {{ auditTotalPages() }}</span>
+            <button
+              class="btn ghost small"
+              [disabled]="auditPage() >= auditTotalPages()"
+              (click)="goToAuditPage(auditPage() + 1)"
+            >
+              Next →
+            </button>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</div>

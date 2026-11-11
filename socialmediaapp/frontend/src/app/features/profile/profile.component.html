@@ -1,0 +1,81 @@
+<div class="profile">
+  <header class="profile-hero">
+    <span class="profile-avatar">{{ (firstName() || email() || 'A').charAt(0) }}</span>
+    <div class="profile-hero-text">
+      <h1>{{ (firstName() + ' ' + lastName()).trim() || 'Your account' }}</h1>
+      <p>{{ email() }}</p>
+    </div>
+  </header>
+
+  <div class="profile-grid">
+    <!-- Profile details -->
+    <section class="profile-panel">
+      <div class="panel-head"><h2>Profile details</h2></div>
+
+      <label class="field">
+        <span class="field-label">Email</span>
+        <input type="email" [value]="email() || ''" disabled />
+        <span class="hint">Your email is your sign-in identity and can't be changed here.</span>
+      </label>
+
+      <div class="field-row">
+        <label class="field">
+          <span class="field-label">First name</span>
+          <input type="text" name="firstName" autocomplete="given-name"
+                 [ngModel]="firstName()" (ngModelChange)="firstName.set($event)" required />
+        </label>
+        <label class="field">
+          <span class="field-label">Last name</span>
+          <input type="text" name="lastName" autocomplete="family-name"
+                 [ngModel]="lastName()" (ngModelChange)="lastName.set($event)" required />
+        </label>
+      </div>
+
+      <label class="field">
+        <span class="field-label">Phone number</span>
+        <input type="tel" name="phone" autocomplete="tel"
+               [ngModel]="phone()" (ngModelChange)="phone.set($event)" required />
+      </label>
+
+      <button class="btn primary auth-submit" [disabled]="!profileValid() || savingProfile()" (click)="saveProfile()">
+        {{ savingProfile() ? 'Saving…' : 'Save changes' }}
+      </button>
+    </section>
+
+    <!-- Change password -->
+    <section class="profile-panel">
+      <div class="panel-head"><h2>Change password</h2></div>
+
+      <label class="field">
+        <span class="field-label">Current password</span>
+        <input type="password" name="currentPassword" autocomplete="current-password"
+               [ngModel]="currentPassword()" (ngModelChange)="currentPassword.set($event)" required />
+      </label>
+
+      <label class="field">
+        <span class="field-label">New password</span>
+        <input type="password" name="newPassword" autocomplete="new-password"
+               [ngModel]="newPassword()" (ngModelChange)="newPassword.set($event)" required />
+        <span class="hint">At least 6 characters.</span>
+      </label>
+
+      <label class="field">
+        <span class="field-label">Confirm new password</span>
+        <input type="password" name="confirmPassword" autocomplete="new-password"
+               [class.input-error]="passwordMismatch()"
+               [ngModel]="confirmPassword()" (ngModelChange)="confirmPassword.set($event)" required />
+        @if (passwordMismatch()) {
+          <span class="hint field-error">Passwords don't match.</span>
+        }
+      </label>
+
+      <button class="btn primary auth-submit" [disabled]="!passwordValid() || savingPassword()" (click)="savePassword()">
+        {{ savingPassword() ? 'Updating…' : 'Update password' }}
+      </button>
+    </section>
+  </div>
+
+  <p class="profile-support-link">
+    Need help? <a routerLink="/support">Contact support →</a>
+  </p>
+</div>

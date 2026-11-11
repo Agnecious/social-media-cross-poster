@@ -1,0 +1,58 @@
+﻿> Building...
+ΓêÜ Building...
+Initial chunk files | Names         | Raw size
+main.js             | main          |  2.86 MB | 
+polyfills.js        | polyfills     | 89.75 kB | 
+styles.css          | styles        | 61.57 kB | 
+
+                    | Initial total |  3.01 MB
+
+Application bundle generation complete. [6.009 seconds] - 2026-11-03T17:39:29.579Z
+
+node : [33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: NG8107: The 
+left side of this optional chain operation does not include 'null' or 
+'undefined' in its type, therefore the '?.' operator can be replaced with the 
+'.' operator. Find more at 
+https://v22.angular.dev/extended-diagnostics/NG8107[0m [1m[35m[plugin 
+angular-compiler][0m
+At line:1 char:60
++ ... frontend" ; node node_modules/@angular/cli/bin/ng.js build --configur ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: ([33mΓû▓ [43;3...r-compiler][0m 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+
+    src/app/features/analytics/analytics.component.html:45:65:
+[37m      45 Γöé ...tn primary" [disabled]="!!stateFor(r)?.[32mloading[37m" 
+(click)="load(r)">
+         Γò╡                                           [32m~~~~~~~[0m
+
+  Warning occurs in the template of component AnalyticsComponent.
+
+    src/app/features/analytics/analytics.component.ts:45:15:
+[37m      45 Γöé   templateUrl: [32m'./analytics.component.html'[37m,
+         Γò╡                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+[33mΓû▓ [43;33m[[43;30mWARNING[43;33m][0m [1mNG8107: NG8107: The left 
+side of this optional chain operation does not include 'null' or 'undefined' 
+in its type, therefore the '?.' operator can be replaced with the '.' 
+operator. Find more at https://v22.angular.dev/extended-diagnostics/NG8107[0m 
+[1m[35m[plugin angular-compiler][0m
+
+    src/app/features/analytics/analytics.component.html:46:28:
+[37m      46 Γöé             {{ stateFor(r)?.[32mloading[37m ? 'LoadingΓÇª' 
+: 'Load insight...
+         Γò╡                             [32m~~~~~~~[0m
+
+  Warning occurs in the template of component AnalyticsComponent.
+
+    src/app/features/analytics/analytics.component.ts:45:15:
+[37m      45 Γöé   templateUrl: [32m'./analytics.component.html'[37m,
+         Γò╡                [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+Output location: C:\Users\F5506166\Work\Kiro\socialmediaapp\frontend\dist\socialmediaapp
+
+EXIT=0

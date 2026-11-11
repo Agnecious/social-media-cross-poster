@@ -1,0 +1,34 @@
+# Runs the whole app with one command:  docker compose up --build
+#
+# Behind a corporate proxy / internal registry, pass build args, e.g.:
+#   $env:HTTP_PROXY="http://proxy:port"; $env:HTTPS_PROXY="http://proxy:port"
+#   docker compose build --build-arg HTTP_PROXY=%HTTP_PROXY% --build-arg HTTPS_PROXY=%HTTPS_PROXY%
+# or set NPM_REGISTRY to your Artifactory/Nexus npm registry.
+
+services:
+  backend:
+    build:
+      context: ./backend
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NPM_REGISTRY: ${NPM_REGISTRY:-}
+    # All platform credentials come from .env — nothing is baked into the image.
+    env_file:
+      - ./backend/.env
+    expose:
+      - "3000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        HTTP_PROXY: ${HTTP_PROXY:-}
+        HTTPS_PROXY: ${HTTPS_PROXY:-}
+        NPM_REGISTRY: ${NPM_REGISTRY:-}
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

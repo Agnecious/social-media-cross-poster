@@ -1,0 +1,169 @@
+<div class="billing">
+  <header class="billing-hero">
+    <div class="billing-hero-text">
+      <h1>Plan &amp; Billing</h1>
+      <p>Pick the plan that fits, start a free trial, and change tiers anytime.</p>
+    </div>
+    @if (billing(); as b) {
+      <span class="plan-status-pill" [attr.data-status]="b.subscriptionStatus">
+        <span class="status-dot"></span>{{ b.subscriptionStatus | titlecase }}
+      </span>
+    }
+  </header>
+
+  @if (loading()) {
+    <div class="billing-panel"><p class="muted">Loading your plan…</p></div>
+  } @else {
+    @if (billing(); as b) {
+      <!-- Status banner -->
+      @if (needsSetup()) {
+        <div class="billing-banner info">
+          <span class="banner-icon">◆</span>
+          <div class="banner-body">
+            <strong>Choose a plan to get started</strong>
+            <span>
+              Pick a plan and add billing to start your free trial. During the trial
+              you can make {{ b.trial.maxPosts }} cross-post(s) across your connected
+              platforms. The app unlocks once setup is complete.
+            </span>
+          </div>
+        </div>
+      } @else if (isTrialing()) {
+        <div class="billing-banner" [class.warn]="!b.trial.publishAllowed" [class.trial]="b.trial.publishAllowed">
+          <span class="banner-icon">{{ b.trial.publishAllowed ? '✦' : '!' }}</span>
+          <div class="banner-body">
+            <strong>Free trial — {{ b.planDetails?.name || b.plan }}</strong>
+            <span>
+              @if (!b.trial.publishAllowed) {
+                You've used your trial post(s). Subscribe below to keep posting.
+              } @else {
+                {{ b.trial.maxPosts - b.trial.postsUsed }} of {{ b.trial.maxPosts }} trial post(s) left — make them count.
+              }
+            </span>
+            <div class="trial-meter" [class.spent]="!b.trial.publishAllowed">
+              <span class="trial-meter-fill" [style.width.%]="(b.trial.postsUsed / b.trial.maxPosts) * 100"></span>
+            </div>
+          </div>
+        </div>
+      } @else if (isActive()) {
+        <div class="billing-banner ok">
+          <span class="banner-icon">✓</span>
+          <div class="banner-body">
+            <strong>Active subscription — {{ b.planDetails?.name || b.plan }}</strong>
+            <span>You're all set. Renews automatically each month until you cancel.</span>
+            @if (b.subscription?.currentPeriodEnd; as periodEnd) {
+              <span class="muted">Next renewal: {{ periodEnd | date: 'mediumDate' }}</span>
+            }
+          </div>
+          <button class="btn ghost small" [disabled]="!!saving()" (click)="cancelSubscription()">
+            {{ saving() === 'cancel' ? 'Cancelling…' : 'Cancel subscription' }}
+          </button>
+        </div>
+      } @else {
+        <div class="billing-banner" [class.warn]="b.subscriptionStatus === 'past_due'" [class.danger]="b.subscriptionStatus !== 'past_due'">
+          <span class="banner-icon">!</span>
+          <div class="banner-body">
+            <strong>Subscription {{ b.subscriptionStatus | titlecase }}</strong>
+            <span>
+              @if (b.subscriptionStatus === 'past_due') {
+                Your last payment failed. Choose a plan below to update billing and continue.
+              } @else {
+                Your subscription has ended. Choose a plan below to continue.
+              }
+            </span>
+          </div>
+        </div>
+      }
+
+      @if (error()) {
+        <div class="billing-banner danger">
+          <span class="banner-icon">✕</span>
+          <div class="banner-body"><strong>Something went wrong</strong><span>{{ error() }}</span></div>
+        </div>
+      }
+      @if (notice()) {
+        <div class="billing-banner ok">
+          <span class="banner-icon">✓</span>
+          <div class="banner-body"><span>{{ notice() }}</span></div>
+        </div>
+      }
+
+      <!-- Tier selector -->
+      <div class="tier-grid">
+        @for (plan of plans(); track plan.id; let i = $index) {
+          <div
+            class="tier-card"
+            [class.popular]="plan.highlight"
+            [class.current]="isLockedPlan(plan)"
+            [attr.data-accent]="i % 4"
+          >
+            <!-- Badges: "Your plan" sits top-left, "Most popular" top-right, so
+                 they never overlap even on the same card. -->
+            @if (isLockedPlan(plan)) {
+              <span class="tier-current-chip"><span class="chip-dot"></span>Your plan</span>
+            }
+            @if (plan.highlight) { <span class="tier-badge">Most popular</span> }
+
+            <h3 class="tier-name">{{ plan.name }}</h3>
+            <div class="tier-price">
+              <span class="tier-amount">{{ price(plan) }}</span>
+              <span class="tier-period">/ month</span>
+            </div>
+            <p class="tier-tagline">{{ plan.tagline }}</p>
+            <ul class="tier-features">
+              @for (f of plan.features; track f) {
+                <li><span class="tick">✓</span>{{ f }}</li>
+              }
+            </ul>
+            @if (isLockedPlan(plan)) {
+              <!-- Already on this plan (active or trialing): can't re-select it. -->
+              <button class="tier-btn is-current" disabled>
+                <span class="tick-inline">✓</span> Current plan
+              </button>
+            } @else {
+              <button
+                class="tier-btn"
+                [class.primary]="plan.highlight"
+                [disabled]="!!saving()"
+                (click)="choose(plan)"
+              >
+                {{ saving() === plan.id ? 'Please wait…'
+                   : (billingEnabled() ? (needsSetup() ? 'Choose ' + plan.name : 'Subscribe to ' + plan.name)
+                                       : 'Switch to ' + plan.name) }}
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <p class="billing-fineprint">
+        Prices in South African Rand (ZAR).
+        @if (billingEnabled()) {
+          Billing is handled securely by our payment provider — we never see your card details.
+        } @else {
+          Billing is not enabled — plan changes apply immediately (no payment).
+        }
+      </p>
+
+      <!-- Mock provider dev controls (only visible when provider = mock) -->
+      @if (billingEnabled() && isMock()) {
+        <div class="billing-panel mock-panel">
+          <div class="panel-head">
+            <h2>Mock billing</h2>
+            <span class="dev-tag">DEV</span>
+          </div>
+          <p class="muted">
+            Simulate provider webhook outcomes without real money. Current status:
+            <code class="action-tag">{{ b.subscriptionStatus }}</code>.
+          </p>
+          <div class="mock-actions">
+            <button class="btn ghost small" [disabled]="!!saving()" (click)="mock('trial')">Start trial</button>
+            <button class="btn ghost small" [disabled]="!!saving()" (click)="mock('paid')">Mark paid (active)</button>
+            <button class="btn ghost small" [disabled]="!!saving()" (click)="mock('failed')">Payment failed</button>
+            <button class="btn ghost small" [disabled]="!!saving()" (click)="mock('canceled')">Cancel</button>
+          </div>
+        </div>
+      }
+    }
+  }
+</div>

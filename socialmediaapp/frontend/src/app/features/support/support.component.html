@@ -1,0 +1,46 @@
+<div class="profile">
+  <header class="profile-hero support-hero">
+    <span class="profile-avatar">✉</span>
+    <div class="profile-hero-text">
+      <h1>Contact support</h1>
+      <p>We're here to help. Your message is tagged with your plan and priority.</p>
+    </div>
+  </header>
+
+  <section class="profile-panel support-page-card">
+    <div class="panel-head">
+      <h2>Send us a message</h2>
+      <span class="support-priority" [attr.data-priority]="supportPriority()">
+        {{ supportPriority() }} priority
+      </span>
+    </div>
+
+    @if (serverSend()) {
+      <!-- Server-side send: in-app form -->
+      <p class="muted">
+        Fill in the box below and we'll get back to you. It's tagged with your
+        plan and priority so we can get to it quickly.
+      </p>
+      <label class="field">
+        <span class="field-label">Your message</span>
+        <textarea
+          rows="7"
+          placeholder="How can we help?"
+          [ngModel]="supportMessage()"
+          (ngModelChange)="supportMessage.set($event)"
+        ></textarea>
+      </label>
+      <button class="btn primary auth-submit" [disabled]="!supportMessage().trim() || sendingSupport()" (click)="sendSupport()">
+        {{ sendingSupport() ? 'Sending…' : '✉ Send message' }}
+      </button>
+    } @else {
+      <!-- Fallback: open the customer's mail client -->
+      <p class="muted">
+        Email our support team directly — this opens your mail app with a
+        pre-filled message tagged with your plan and priority.
+      </p>
+      <p class="hint">Emails go to {{ supportEmail() }}.</p>
+      <button class="btn primary" (click)="contactSupport()">✉ Contact support</button>
+    }
+  </section>
+</div>

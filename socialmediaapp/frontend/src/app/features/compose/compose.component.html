@@ -1,0 +1,281 @@
+<div class="compose">
+  <header class="compose-hero">
+    <div class="compose-hero-text">
+      <h1>Create a post</h1>
+      <p>Write once, publish everywhere. Pick the accounts, choose now or later.</p>
+    </div>
+  </header>
+
+  <div class="compose-grid">
+    <!-- Left: the post itself -->
+    <section class="compose-panel">
+      <div class="panel-head"><h2>Your post</h2></div>
+
+      <!-- Text -->
+      <div class="field">
+        <span class="field-label">Text / caption</span>
+        <div class="text-wrap">
+          <textarea
+            rows="5"
+            placeholder="What do you want to share?"
+            [ngModel]="text()"
+            (ngModelChange)="text.set($event)"
+          ></textarea>
+          <button
+            type="button"
+            class="emoji-toggle"
+            title="Add emoji"
+            aria-label="Add emoji"
+            (click)="toggleEmojis()"
+          >😊</button>
+
+          @if (showEmojis()) {
+            <div class="emoji-panel">
+              @for (e of emojis; track e) {
+                <button type="button" class="emoji-btn" (click)="insertEmoji(e)">{{ e }}</button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Media type -->
+      <div class="field">
+        <span class="field-label">Media</span>
+        <div class="segmented">
+          <button type="button" [class.active]="mediaType() === 'none'" (click)="onMediaTypeChange('none')">Text only</button>
+          <button type="button" [class.active]="mediaType() === 'image'" (click)="onMediaTypeChange('image')">Image</button>
+          <button type="button" [class.active]="mediaType() === 'video'" (click)="onMediaTypeChange('video')">Video</button>
+        </div>
+      </div>
+
+      <!-- File / URL -->
+      @if (mediaType() !== 'none') {
+        <label class="field">
+          <span class="field-label">Upload file</span>
+          <input
+            type="file"
+            [accept]="mediaType() === 'video' ? 'video/*' : 'image/*'"
+            (change)="onFileChange($event)"
+          />
+          @if (file()) {
+            <span class="hint">Selected: {{ file()?.name }}</span>
+          }
+        </label>
+
+        <label class="field">
+          <span class="field-label">Public media URL (required for Instagram)</span>
+          <input
+            type="url"
+            placeholder="https://…"
+            [ngModel]="mediaUrl()"
+            (ngModelChange)="mediaUrl.set($event)"
+          />
+          <span class="hint">Instagram fetches media from a public URL rather than a file upload.</span>
+        </label>
+      }
+    </section>
+
+    <!-- Right: destinations -->
+    <section class="compose-panel">
+      <div class="panel-head">
+        <h2>Publish to</h2>
+        @if (selected().size > 0) { <span class="count-badge">{{ selected().size }} selected</span> }
+      </div>
+
+      @if (platformSvc.platforms().length === 0) {
+        <p class="empty">No platforms enabled. Add credentials to the backend <code>.env</code>.</p>
+      } @else if (noAccounts()) {
+        <p class="empty">
+          No accounts connected. <a routerLink="/connections">Connect an account</a> to start posting.
+        </p>
+      } @else {
+        <div class="dest-grid">
+          @for (a of eligibleAccounts(); track a.key) {
+            <button
+              type="button"
+              class="dest-tile"
+              [attr.data-platform]="a.platform"
+              [class.selected]="selected().has(a.key)"
+              [class.disabled]="!a.eligible"
+              [disabled]="!a.eligible"
+              (click)="toggle(a)"
+            >
+              <span class="dest-avatar" [attr.data-platform]="a.platform">{{ a.platform.charAt(0) | uppercase }}</span>
+              <span class="dest-body">
+                <span class="dest-name">{{ a.platform | titlecase }}</span>
+                <span class="dest-account">{{ a.label }}</span>
+              </span>
+              <span class="dest-state">
+                @if (!a.supports) {
+                  <span class="dest-note">No {{ mediaType() }}</span>
+                } @else if (selected().has(a.key)) {
+                  <span class="dest-check">✓</span>
+                } @else {
+                  <span class="dest-note ok">Ready</span>
+                }
+              </span>
+            </button>
+          }
+        </div>
+
+        <!-- Destination pickers, per selected account that needs one -->
+        @for (a of eligibleAccounts(); track a.key) {
+          @if (selected().has(a.key) && a.requiresTarget) {
+            <label class="field dest-target">
+              <span class="field-label">{{ a.platform | titlecase }} destination — {{ a.label }}</span>
+              @if (targets.targetsFor(a.platform, a.accountId).length === 0) {
+                <span class="hint limit-note">
+                  @if (a.platform === 'facebook') {
+                    No Facebook Page found. Facebook only lets apps post to a <strong>Page</strong>,
+                    not a personal profile — create one at
+                    <a href="https://www.facebook.com/pages/create" target="_blank" rel="noopener">facebook.com/pages/create</a>,
+                    then reconnect this account under Connections.
+                  } @else if (a.platform === 'instagram') {
+                    No Instagram Business/Creator account found. Instagram only allows posting from a
+                    <strong>Business or Creator</strong> account linked to a Facebook Page.
+                  } @else {
+                    No publishing destination found for this account. Try reconnecting it.
+                  }
+                </span>
+              } @else {
+                <select
+                  [ngModel]="targets.selectedIdFor(a.platform, a.accountId) ?? ''"
+                  (ngModelChange)="onTargetChange(a, $event)"
+                >
+                  <option value="" disabled>Choose a destination…</option>
+                  @for (t of targets.targetsFor(a.platform, a.accountId); track t.id) {
+                    <option [value]="t.id">{{ t.name }}</option>
+                  }
+                </select>
+              }
+            </label>
+          }
+        }
+      }
+    </section>
+  </div>
+
+  <!-- Actions -->
+  <section class="compose-panel">
+    <div class="compose-actions">
+      <div class="action-group">
+        <button class="btn primary" [disabled]="!canPublish()" (click)="publish()">
+          {{ publishing() ? 'Publishing…' : '🚀 Publish now' }}
+        </button>
+        <span class="action-hint">Post immediately to the selected accounts.</span>
+      </div>
+
+      <div class="action-divider"><span>or</span></div>
+
+      <div class="action-group">
+        <button
+          class="btn"
+          [class.active]="showScheduler()"
+          [disabled]="selected().size === 0"
+          (click)="toggleScheduler()"
+        >
+          {{ showScheduler() ? 'Cancel schedule' : '🗓 Schedule post' }}
+        </button>
+        <span class="action-hint">Pick a future date &amp; time instead.</span>
+      </div>
+    </div>
+
+    <!-- Scheduler panel -->
+    @if (showScheduler()) {
+      <div class="scheduler">
+        <label class="field">
+          <span class="field-label">Publish date &amp; time</span>
+          <input
+            type="datetime-local"
+            [min]="minScheduleValue()"
+            [ngModel]="scheduledAt()"
+            (ngModelChange)="scheduledAt.set($event)"
+          />
+          <span class="hint">Choose a future time (at least ~10 minutes ahead).</span>
+        </label>
+
+        @if (selected().size > 0) {
+          <ul class="schedule-breakdown">
+            @for (a of scheduleBreakdown().native; track a.key) {
+              <li>
+                <strong>{{ a.platform | titlecase }}</strong> — {{ a.label }}
+                <span class="chip ok">scheduled by the platform</span>
+              </li>
+            }
+            @for (a of scheduleBreakdown().browser; track a.key) {
+              <li>
+                <strong>{{ a.platform | titlecase }}</strong> — {{ a.label }}
+                <span class="chip warn">needs this tab open until it posts</span>
+              </li>
+            }
+          </ul>
+          @if (scheduleBreakdown().browser.length > 0) {
+            <p class="hint">
+              {{ scheduleBreakdown().browser.length }} account(s) don't support
+              server-side scheduling, so they'll post from this browser at the
+              chosen time — keep this tab open until then.
+            </p>
+          }
+        }
+
+        <div class="actions">
+          <button class="btn primary" [disabled]="!canSchedule" (click)="schedulePost()">
+            {{ publishing() ? 'Scheduling…' : 'Confirm schedule' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+      @if (showUpgrade()) {
+        <p class="hint"><a routerLink="/billing">Choose a plan to continue →</a></p>
+      }
+    }
+  </section>
+
+  <!-- Posts queued in this browser (tab must stay open) -->
+  @if (browserQueued().length > 0) {
+    <section class="compose-panel">
+      <div class="panel-head"><h2>Queued in this browser</h2></div>
+      <ul class="queued-list">
+        @for (q of browserQueued(); track q.timerId) {
+          <li>
+            <span><strong>{{ q.label }}</strong> — posts at {{ q.at | date: 'medium' }}</span>
+            <button class="btn ghost small" (click)="cancelBrowserQueued(q.timerId)">Cancel</button>
+          </li>
+        }
+      </ul>
+      <p class="hint">These fire only while this tab stays open.</p>
+    </section>
+  }
+
+  <!-- Results -->
+  @if (results().length > 0) {
+    <section class="compose-panel">
+      <div class="panel-head"><h2>Results</h2></div>
+      <ul class="results-list">
+        @for (r of results(); track r.accountId ?? r.platform) {
+          <li [class.ok]="r.ok" [class.fail]="!r.ok">
+            <span class="result-icon">{{ r.ok ? '✓' : '✕' }}</span>
+            <span class="result-text">
+              <strong>{{ r.platform | titlecase }}</strong>
+              @if (r.label) { <span class="muted">— {{ r.label }}</span> }
+              @if (r.ok) {
+                — posted
+                @if (r.result; as res) {
+                  @if (res.url) {
+                    (<a [href]="res.url" target="_blank" rel="noopener">view</a>)
+                  }
+                }
+              } @else {
+                — failed: {{ r.error }}
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

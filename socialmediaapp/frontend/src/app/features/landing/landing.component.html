@@ -1,0 +1,293 @@
+<div class="lp">
+  <!-- Sticky header with smooth-scroll nav -->
+  <header class="lp-header">
+    <div class="lp-brand" (click)="scrollTo('top')">
+      <span class="lp-mark">◆</span>
+      <span>Social Media Cross Poster</span>
+    </div>
+    <nav class="lp-nav">
+      <button type="button" (click)="scrollTo('features')">Features</button>
+      <button type="button" (click)="scrollTo('how')">How it works</button>
+      <button type="button" (click)="scrollTo('connect')">Connect</button>
+      <button type="button" (click)="scrollTo('schedule')">Schedule</button>
+      <button type="button" (click)="scrollTo('pricing')">Pricing</button>
+      <button type="button" (click)="scrollTo('contact')">Contact</button>
+    </nav>
+    <div class="lp-header-actions">
+      <button type="button" class="lp-btn ghost" (click)="scrollTo('demo')">Request Demo</button>
+      <a class="lp-btn primary" routerLink="/compose">Start Your Free Trial</a>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section id="top" class="lp-hero">
+    <div class="lp-hero-copy">
+      <h1>Take control of your time by avoiding jumping between apps.</h1>
+      <p class="lp-sub">
+        broadcast your content across every single one of your channels
+        instantly with just one click. share effortlessly!
+      </p>
+      <a class="lp-btn primary big" routerLink="/compose">
+        Get Started <span class="arrow">→</span>
+      </a>
+      <p class="lp-fineprint">No credit card required &nbsp;|&nbsp; Cancel anytime</p>
+    </div>
+
+    <div class="lp-hero-art" aria-hidden="true">
+      <div class="mock-card mock-profile">
+        <div class="mock-avatar"></div>
+        <div class="mock-lines">
+          <span class="mock-name">Your Brand</span>
+          <span class="mock-handle">Sharing across every channel</span>
+        </div>
+      </div>
+      <div class="mock-social-row">
+        @for (s of socials; track s.name) {
+          <span class="mock-social" [style.background]="s.color">{{ s.glyph }}</span>
+        }
+      </div>
+      <div class="mock-card mock-analytics">
+        <span class="mock-analytics-label">Total Engagement</span>
+        <div class="mock-analytics-row">
+          <span class="mock-analytics-value">12.5K</span>
+          <span class="mock-analytics-up">↑ 23%</span>
+        </div>
+        <svg viewBox="0 0 200 60" class="mock-chart" preserveAspectRatio="none">
+          <polyline
+            points="0,50 25,44 50,46 75,32 100,36 125,22 150,26 175,12 200,8"
+            fill="none" stroke="#22c55e" stroke-width="3" />
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trust strip -->
+  <section class="lp-trust">
+    <p>Trusted by creators and businesses everywhere</p>
+    <div class="lp-trust-logos">
+      <span>NKWANA</span>
+      <span>MEDIA CO</span>
+      <span>BRANDLY</span>
+      <span>SOCIALSINQ</span>
+      <span>WORKWAVE</span>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="lp-section">
+    <h2 class="lp-h2" appReveal>Everything you need to post smarter</h2>
+    <p class="lp-lead" appReveal [revealDelay]="80">One place to manage and publish across all your social channels.</p>
+    <div class="lp-features">
+      @for (f of features; track f.title; let i = $index) {
+        <div class="lp-feature" appReveal [revealDelay]="i * 110">
+          <div class="lp-feature-icon">{{ f.icon }}</div>
+          <h3>{{ f.title }}</h3>
+          <p>{{ f.text }}</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how" class="lp-section alt">
+    <h2 class="lp-h2" appReveal>How it works</h2>
+    <p class="lp-lead" appReveal [revealDelay]="80">Three steps from idea to published — everywhere.</p>
+    <div class="lp-steps">
+      @for (s of steps; track s.n; let i = $index) {
+        <div class="lp-step" appReveal [revealDelay]="i * 130">
+          <span class="lp-step-num">{{ s.n }}</span>
+          <h3>{{ s.title }}</h3>
+          <p>{{ s.text }}</p>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- Connect -->
+  <section id="connect" class="lp-split">
+    <div class="lp-split-copy" appReveal>
+      <h2 class="lp-h2">Connect your socials in seconds</h2>
+      <p class="lp-lead">
+        Link each account through its own secure login — the app never sees your
+        password. Connect once and post to Facebook, Instagram, YouTube, and TikTok.
+      </p>
+      <a class="lp-btn primary" routerLink="/connections">Connect an account</a>
+    </div>
+    <div class="lp-split-art" aria-hidden="true" appReveal [revealDelay]="120">
+      <div class="lp-connect-grid">
+        @for (s of socials; track s.name) {
+          <span class="lp-connect-chip" [style.background]="s.color">{{ s.glyph }}</span>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Schedule -->
+  <section id="schedule" class="lp-split reverse">
+    <div class="lp-split-copy" appReveal>
+      <h2 class="lp-h2">Schedule ahead, post on time</h2>
+      <p class="lp-lead">
+        Pick a future date and time. Facebook and YouTube are scheduled by the
+        platform itself; Instagram and TikTok post from the app at the moment you chose.
+      </p>
+      <a class="lp-btn primary" routerLink="/compose">Schedule a post</a>
+    </div>
+    <div class="lp-split-art" aria-hidden="true" appReveal [revealDelay]="120">
+      <div class="mock-card lp-schedule-card">
+        <span class="mock-analytics-label">Publish date &amp; time</span>
+        <div class="lp-schedule-value">Fri, 9:00 AM</div>
+        <div class="lp-schedule-tags">
+          <span class="lp-tag ok">Facebook · native</span>
+          <span class="lp-tag ok">YouTube · native</span>
+          <span class="lp-tag warn">Instagram · app</span>
+          <span class="lp-tag warn">TikTok · app</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Manage-all bar -->
+  <section class="lp-manage">
+    <span class="lp-manage-text">Manage all your socials from one place</span>
+    <div class="lp-manage-icons">
+      @for (s of socials; track s.name) {
+        <span class="lp-manage-icon" [style.background]="s.color" [title]="s.name">{{ s.glyph }}</span>
+      }
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing" class="lp-section">
+    <h2 class="lp-h2" appReveal>Simple, transparent pricing</h2>
+    <p class="lp-lead" appReveal [revealDelay]="80">Start with a {{ trialDays() }}-day free trial. Upgrade or downgrade anytime.</p>
+    @if (plansError()) {
+      <p class="lp-lead" style="color:#c0392b">{{ plansError() }}</p>
+    }
+    <div class="lp-pricing">
+      @for (plan of plans(); track plan.id; let i = $index) {
+        <div class="price-card" [class.popular]="plan.highlight" appReveal [revealDelay]="i * 120">
+          @if (plan.highlight) { <span class="price-badge">Most popular</span> }
+          <h3 class="price-name">{{ plan.name }}</h3>
+          <div class="price-amount">
+            <span class="price-value">{{ price(plan) }}</span>
+            <span class="price-period">/ month</span>
+          </div>
+          <p class="lp-fineprint" style="text-align:center;margin-top:-6px">{{ plan.tagline }}</p>
+          <ul class="price-features">
+            @for (f of plan.features; track f) {
+              <li>✓ {{ f }}</li>
+            }
+          </ul>
+          <a class="lp-btn big" [class.primary]="plan.highlight" routerLink="/login">
+            Start {{ trialDays() }}-day trial
+          </a>
+        </div>
+      }
+    </div>
+    <p class="lp-fineprint" style="text-align:center">
+      Prices in South African Rand (ZAR). No card required — your {{ trialDays() }}-day trial starts on the Starter plan and you can switch tiers anytime.
+    </p>
+  </section>
+
+  <!-- Final CTA / Demo -->
+  <section id="demo" class="lp-cta" appReveal>
+    <h2>Ready to stop posting manually?</h2>
+    <p>Start cross-posting and scheduling across all your channels today.</p>
+    <div class="lp-cta-actions">
+      <a class="lp-btn primary big" routerLink="/compose">Get Started <span class="arrow">→</span></a>
+      <a class="lp-btn ghost big" routerLink="/connections">Connect accounts</a>
+    </div>
+    <p class="lp-fineprint">No credit card required &nbsp;|&nbsp; Cancel anytime</p>
+  </section>
+
+  <!-- Get in Touch -->
+  <section id="contact" class="lp-contact">
+    <div class="lp-contact-head" appReveal>
+      <h2 class="lp-h2">Get in Touch</h2>
+      <p class="lp-lead">Have questions? We'd love to hear from you.</p>
+    </div>
+
+    <div class="lp-contact-grid">
+      <!-- Contact info -->
+      <div class="lp-contact-info" appReveal>
+        <h3>Contact Information</h3>
+        <p class="lp-lead">
+          Reach out through any of these channels. Our team is here to help you
+          post smarter across your social channels.
+        </p>
+
+        <div class="lp-contact-card">
+          <span class="lp-contact-icon email">✉</span>
+          <div>
+            <strong>Email</strong>
+            <a [href]="'mailto:' + contact.email">{{ contact.email }}</a>
+            <span class="lp-contact-sub">We'll respond within 24 hours</span>
+          </div>
+        </div>
+
+        <div class="lp-contact-card">
+          <span class="lp-contact-icon biz">🏢</span>
+          <div>
+            <strong>Operations &amp; Management</strong>
+            <span class="lp-contact-strong">{{ contact.company }}</span>
+            <span class="lp-contact-sub">{{ contact.location }}</span>
+          </div>
+        </div>
+
+        <div class="lp-contact-card">
+          <span class="lp-contact-icon loc">📍</span>
+          <div>
+            <strong>Location</strong>
+            <span class="lp-contact-strong">{{ contact.location }}</span>
+            <span class="lp-contact-sub">Serving clients across South Africa</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message form -->
+      <div class="lp-contact-form" appReveal [revealDelay]="120">
+        <h3>Send us a Message</h3>
+        <form (ngSubmit)="sendMessage()">
+          <label class="lp-field">
+            <span>Full Name *</span>
+            <input type="text" name="fullName" placeholder="John Doe" [(ngModel)]="form.fullName" required />
+          </label>
+          <label class="lp-field">
+            <span>Email Address *</span>
+            <input type="email" name="email" placeholder="john@example.com" [(ngModel)]="form.email" required />
+          </label>
+          <label class="lp-field">
+            <span>Phone Number</span>
+            <input type="tel" name="phone" placeholder="+27 82 000 0000" [(ngModel)]="form.phone" />
+          </label>
+          <label class="lp-field">
+            <span>Subject *</span>
+            <input type="text" name="subject" placeholder="How can we help?" [(ngModel)]="form.subject" required />
+          </label>
+          <label class="lp-field">
+            <span>Message *</span>
+            <textarea name="message" rows="4" placeholder="Tell us more about your enquiry…" [(ngModel)]="form.message" required></textarea>
+          </label>
+          <button type="submit" class="lp-btn primary big lp-send" [disabled]="!canSend">
+            Send Message
+          </button>
+          <p class="lp-contact-note">Opens your email app addressed to us.</p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="lp-footer">
+    <div class="lp-footer-inner">
+      <div class="lp-brand"><span class="lp-mark">◆</span><span>Social Media Cross Poster</span></div>
+      <div class="lp-footer-links">
+        <button type="button" (click)="scrollTo('features')">Features</button>
+        <button type="button" (click)="scrollTo('how')">How it works</button>
+        <button type="button" (click)="scrollTo('pricing')">Pricing</button>
+        <a routerLink="/compose">Launch app</a>
+      </div>
+    </div>
+    <div class="lp-footer-bottom">© Mathema Nkwana @2026 · Nkwana PTY. All Rights Reserved.</div>
+  </footer>
+</div>

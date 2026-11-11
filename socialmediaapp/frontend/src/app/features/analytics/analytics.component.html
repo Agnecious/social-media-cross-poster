@@ -1,0 +1,160 @@
+<div class="analytics">
+  <header class="analytics-hero">
+    <div class="analytics-hero-text">
+      <h1>Analytics</h1>
+      <p>Audience, reach, engagement and monetisation across your connected accounts.</p>
+    </div>
+    <div class="hero-controls">
+      <!-- Period selector -->
+      <div class="period-switch">
+        @for (d of periods; track d) {
+          <button type="button" [class.active]="days() === d" (click)="setDays(d)">{{ d }}d</button>
+        }
+      </div>
+      <!-- Export (Agency only) -->
+      @if (canExport()) {
+        <button class="hero-btn" [disabled]="!hasAnyResults()" (click)="exportCsv()" title="Export loaded insights to CSV">
+          ⬇ Export CSV
+        </button>
+      } @else {
+        <a class="hero-btn ghost" routerLink="/billing" title="CSV export is an Agency-plan feature">
+          ⬇ Export · Agency
+        </a>
+      }
+    </div>
+  </header>
+
+  @if (!hasRows()) {
+    <div class="analytics-panel">
+      <p class="empty">
+        No analytics-capable accounts connected. Connect a Facebook, Instagram, or
+        YouTube account on <a routerLink="/connections">Connections</a> to see insights.
+      </p>
+    </div>
+  } @else {
+    @for (r of rows(); track r.platform + r.accountId) {
+      <section class="account-block">
+        <div class="account-head">
+          <div class="account-id">
+            <span class="account-avatar" [attr.data-platform]="r.platform">{{ r.platform.charAt(0) | uppercase }}</span>
+            <div>
+              <strong>{{ r.platform | titlecase }}</strong>
+              <span class="account-sub">{{ r.label }}</span>
+            </div>
+          </div>
+          <button class="btn primary" [disabled]="!!stateFor(r)?.loading" (click)="load(r)">
+            {{ stateFor(r)?.loading ? 'Loading…' : 'Load insights' }}
+          </button>
+        </div>
+
+        <!-- Destination picker for platforms that need one -->
+        @if (r.requiresTarget) {
+          @if (targets.targetsFor(r.platform, r.accountId).length === 0) {
+            <span class="hint">Fetching destinations… if none appear, reconnect this account.</span>
+          } @else {
+            <label class="field inline-field">
+              <span class="field-label">Destination</span>
+              <select
+                [ngModel]="targets.selectedIdFor(r.platform, r.accountId) ?? ''"
+                (ngModelChange)="onTargetChange(r, $event)"
+                name="target-{{ r.accountId }}"
+              >
+                <option value="" disabled>Choose a destination…</option>
+                @for (t of targets.targetsFor(r.platform, r.accountId); track t.id) {
+                  <option [value]="t.id">{{ t.name }}</option>
+                }
+              </select>
+            </label>
+          }
+        }
+
+        <!-- Result -->
+        @if (stateFor(r); as st) {
+          @if (st.error) {
+            <div class="analytics-banner danger">
+              <span class="banner-icon">✕</span>
+              <div class="banner-body"><strong>Couldn't load insights</strong><span>{{ st.error }}</span></div>
+            </div>
+          }
+          @if (st.result; as res) {
+            @if (!res.supported) {
+              <p class="hint">{{ res.note || 'Analytics not available for this platform.' }}</p>
+            } @else if (isEmpty(res)) {
+              <p class="hint">{{ res.note || 'No data for this period.' }}</p>
+              @if (res.debug?.length) {
+                <details class="diag">
+                  <summary>Why is nothing showing?</summary>
+                  <ul>
+                    @for (d of res.debug; track d) { <li>{{ d }}</li> }
+                  </ul>
+                </details>
+              }
+            } @else {
+              <!-- Headline follower/subscriber number -->
+              @if (headlineFollowers(res); as hf) {
+                <div class="headline">
+                  <span class="headline-value">{{ hf.value | number }}</span>
+                  <span class="headline-label">{{ hf.label }}</span>
+                </div>
+              }
+
+              <!-- Explanatory note alongside populated results (e.g. Facebook
+                   limited-insights / reconnect hint). -->
+              @if (res.note) {
+                <div class="analytics-banner info">
+                  <span class="banner-icon">i</span>
+                  <div class="banner-body"><span>{{ res.note }}</span></div>
+                </div>
+              }
+
+              <!-- Category sections -->
+              @for (g of groupsFor(res); track g.category) {
+                <div class="metric-section" [attr.data-cat]="g.category">
+                  <div class="section-head">
+                    <span class="section-icon">{{ g.icon }}</span>
+                    <h3>{{ g.title }}</h3>
+                  </div>
+                  <div class="metric-grid">
+                    @for (m of g.metrics; track m.key) {
+                      <div class="metric" [attr.data-cat]="g.category">
+                        <span class="metric-value">
+                          @if (isMoney(m)) { <span class="money-sign">$</span>}{{ m.value | number: '1.0-2' }}
+                        </span>
+                        <span class="metric-label">{{ m.label }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Monetisation not available note -->
+              @if (monetizationNote(res); as mn) {
+                <div class="monetization-note">
+                  <span class="mn-icon">💰</span>
+                  <div>
+                    <strong>Monetisation</strong>
+                    <span>{{ mn }}</span>
+                  </div>
+                </div>
+              }
+
+              <!-- Diagnostics: which metrics the API rejected and why. -->
+              @if (res.debug?.length) {
+                <details class="diag">
+                  <summary>Diagnostics — {{ res.debug.length }} metric(s) unavailable</summary>
+                  <ul>
+                    @for (d of res.debug; track d) { <li>{{ d }}</li> }
+                  </ul>
+                </details>
+              }
+            }
+          } @else if (!st.loading && !st.error) {
+            <p class="hint">Press “Load insights” to pull the latest numbers for this account.</p>
+          }
+        } @else {
+          <p class="hint">Press “Load insights” to pull the latest numbers for this account.</p>
+        }
+      </section>
+    }
+  }
+</div>

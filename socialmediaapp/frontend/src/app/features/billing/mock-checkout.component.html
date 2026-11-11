@@ -1,0 +1,61 @@
+<div class="checkout">
+  <div class="checkout-card">
+    <div class="checkout-head">
+      <span class="checkout-lock">🔒</span>
+      <div>
+        <h1>Secure checkout</h1>
+        <p class="checkout-sub">Demo payment page — no real card is charged.</p>
+      </div>
+    </div>
+
+    <!-- Order summary -->
+    @if (plan(); as p) {
+      <div class="checkout-summary">
+        <div class="summary-row">
+          <span>{{ p.name }} plan</span>
+          <strong>{{ priceLabel() }}/mo</strong>
+        </div>
+        <div class="summary-note">Free trial first — you can cancel anytime before it ends.</div>
+      </div>
+    } @else if (loading()) {
+      <p class="muted">Loading…</p>
+    }
+
+    <!-- Fake card form (inert) -->
+    <div class="checkout-mock-flag">Test mode — fields are for show only</div>
+
+    <label class="field">
+      <span class="field-label">Name on card</span>
+      <input type="text" autocomplete="off" placeholder="Jane Doe"
+             [ngModel]="cardName()" (ngModelChange)="cardName.set($event)" />
+    </label>
+
+    <label class="field">
+      <span class="field-label">Card number</span>
+      <input type="text" autocomplete="off" placeholder="4242 4242 4242 4242" maxlength="19"
+             [ngModel]="cardNumber()" (ngModelChange)="cardNumber.set($event)" />
+    </label>
+
+    <div class="field-row">
+      <label class="field">
+        <span class="field-label">Expiry</span>
+        <input type="text" autocomplete="off" placeholder="MM/YY" maxlength="5"
+               [ngModel]="cardExpiry()" (ngModelChange)="cardExpiry.set($event)" />
+      </label>
+      <label class="field">
+        <span class="field-label">CVC</span>
+        <input type="text" autocomplete="off" placeholder="123" maxlength="4"
+               [ngModel]="cardCvc()" (ngModelChange)="cardCvc.set($event)" />
+      </label>
+    </div>
+
+    <button class="btn primary auth-submit" [disabled]="paying()" (click)="pay()">
+      {{ paying() ? 'Processing…' : 'Pay &amp; start trial' }}
+    </button>
+    <button class="btn ghost checkout-cancel" [disabled]="paying()" (click)="cancel()">
+      Cancel
+    </button>
+
+    <p class="checkout-foot">🔒 Payments are processed by our provider. This app never sees your card details.</p>
+  </div>
+</div>

@@ -1,0 +1,123 @@
+<section class="card">
+  <h1>Administrator</h1>
+  <p class="muted">
+    Manage each platform's credentials and options. Changes are written to the
+    backend <code>.env</code> and take effect immediately.
+  </p>
+
+  <p class="admin-warning">
+    ⚠ This screen edits platform secrets. Keep your admin password strong, and
+    always use HTTPS when running anywhere other than your local machine.
+  </p>
+
+  @if (!adminSvc.envFileExists()) {
+    <p class="error">
+      No <code>.env</code> file found on the backend. Create one (copy
+      <code>.env.example</code> to <code>.env</code>) so changes can be saved.
+    </p>
+  }
+
+  @if (adminSvc.loading()) {
+    <p>Loading configuration…</p>
+  } @else {
+    <!-- Single dropdown to choose which platform to edit -->
+    <label class="field">
+      <span class="field-label">Select a platform</span>
+      <select
+        [ngModel]="selectedKey()"
+        (ngModelChange)="onSelectPlatform($event)"
+      >
+        @for (p of adminSvc.platforms(); track p.key) {
+          <option [value]="p.key">
+            {{ p.key | titlecase }} — {{ p.enabled ? 'enabled' : 'disabled' }}
+          </option>
+        }
+      </select>
+    </label>
+
+    @if (selectedConfig(); as p) {
+      <div class="admin-platform">
+        <div class="admin-platform-head">
+          <h2>{{ p.key | titlecase }}</h2>
+          <label class="switch">
+            <input
+              type="checkbox"
+              [ngModel]="formFor(p.key).enabled"
+              (ngModelChange)="update(p.key, 'enabled', $event)"
+            />
+            <span>{{ formFor(p.key).enabled ? 'Enabled' : 'Disabled' }}</span>
+          </label>
+        </div>
+
+        <label class="field">
+          <span class="field-label">Client ID</span>
+          <input
+            type="text"
+            [ngModel]="formFor(p.key).clientId"
+            (ngModelChange)="update(p.key, 'clientId', $event)"
+            placeholder="Client / App ID"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Client secret</span>
+          <input
+            type="password"
+            autocomplete="new-password"
+            [ngModel]="formFor(p.key).clientSecret"
+            (ngModelChange)="update(p.key, 'clientSecret', $event)"
+            [placeholder]="secretPlaceholder(p)"
+          />
+          <span class="hint">Leave blank to keep the current secret.</span>
+        </label>
+
+        <label class="field">
+          <span class="field-label">Redirect URI</span>
+          <input
+            type="url"
+            [ngModel]="formFor(p.key).redirectUri"
+            (ngModelChange)="update(p.key, 'redirectUri', $event)"
+            placeholder="http://localhost:3000/api/auth/…/callback"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field-label">Scopes (comma-separated)</span>
+          <input
+            type="text"
+            [ngModel]="formFor(p.key).scopes"
+            (ngModelChange)="update(p.key, 'scopes', $event)"
+            placeholder="scope_a, scope_b"
+          />
+        </label>
+
+        <label class="field">
+          <span class="field-label">API version</span>
+          <input
+            type="text"
+            [ngModel]="formFor(p.key).apiVersion"
+            (ngModelChange)="update(p.key, 'apiVersion', $event)"
+            placeholder="e.g. v21.0"
+          />
+        </label>
+
+        <div class="actions">
+          <button
+            class="btn primary"
+            [disabled]="savingKey() === p.key"
+            (click)="save(p.key)"
+          >
+            {{ savingKey() === p.key ? 'Saving…' : 'Save ' + (p.key | titlecase) }}
+          </button>
+          @if (savedKey() === p.key) {
+            <span class="badge ok">Saved</span>
+          }
+        </div>
+      </div>
+    }
+  }
+
+  @if (error()) {
+    <p class="error">{{ error() }}</p>
+  }
+</section>
