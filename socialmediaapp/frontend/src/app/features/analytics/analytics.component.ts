@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { TitleCasePipe, DecimalPipe, UpperCasePipe } from '@angular/common';
+import { DecimalPipe, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { PlatformService } from '../../core/services/platform.service';
@@ -9,6 +9,7 @@ import { AnalyticsService } from '../../core/services/analytics.service';
 import { PlansService } from '../../core/services/plans.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AnalyticsResult, AnalyticsMetric, MetricCategory } from '../../core/models/analytics.model';
+import { PlatformNamePipe } from '../../core/pipes/platform-name.pipe';
 
 /** A category section of metrics, ready to render. */
 interface MetricGroup {
@@ -41,7 +42,7 @@ interface AnalyticsRow {
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [TitleCasePipe, DecimalPipe, UpperCasePipe, FormsModule, RouterLink],
+  imports: [DecimalPipe, UpperCasePipe, FormsModule, RouterLink, PlatformNamePipe],
   templateUrl: './analytics.component.html',
 })
 export class AnalyticsComponent implements OnInit {

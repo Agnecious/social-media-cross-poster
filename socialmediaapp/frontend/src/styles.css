@@ -97,8 +97,11 @@ html, body {
   z-index: 10;
 }
 
-.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; color: var(--text); text-decoration: none; }
 .brand-mark { color: var(--primary); }
+/* The header brand doubles as the "home" link — make it feel clickable. */
+a.brand { cursor: pointer; transition: opacity 0.15s; }
+a.brand:hover { opacity: 0.75; }
 
 .app-nav { display: flex; gap: 6px; }
 .app-nav a {
@@ -1279,6 +1282,7 @@ input[type='datetime-local']:focus {
 .account-avatar[data-platform='youtube']   { background: #ff0000; }
 .account-avatar[data-platform='tiktok']    { background: #010101; }
 .account-avatar[data-platform='x']         { background: #000000; }
+.account-avatar[data-platform='linkedin']  { background: #0a66c2; }
 
 .inline-field { max-width: 380px; margin: 14px 0 0; }
 
@@ -1413,6 +1417,7 @@ input[type='datetime-local']:focus {
 .conn-avatar[data-platform='youtube'],   .dest-avatar[data-platform='youtube']   { background: #ff0000; }
 .conn-avatar[data-platform='tiktok'],    .dest-avatar[data-platform='tiktok']    { background: #010101; }
 .conn-avatar[data-platform='x'],         .dest-avatar[data-platform='x']         { background: #000000; }
+.conn-avatar[data-platform='linkedin'],  .dest-avatar[data-platform='linkedin']  { background: #0a66c2; }
 
 /* --- Connections (modernised) --- */
 .connections { display: flex; flex-direction: column; gap: 18px; }
@@ -1462,6 +1467,7 @@ input[type='datetime-local']:focus {
 .conn-card[data-platform='youtube']   { --plat-accent: #ff0000; }
 .conn-card[data-platform='tiktok']    { --plat-accent: #010101; }
 .conn-card[data-platform='x']         { --plat-accent: #000000; }
+.conn-card[data-platform='linkedin']  { --plat-accent: #0a66c2; }
 
 .conn-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .conn-avatar { width: 44px; height: 44px; border-radius: 12px; font-size: 19px; }
@@ -1586,6 +1592,7 @@ input[type='datetime-local']:focus {
 .dest-tile[data-platform='youtube']   { --plat-accent: #ff0000; }
 .dest-tile[data-platform='tiktok']    { --plat-accent: #010101; }
 .dest-tile[data-platform='x']         { --plat-accent: #000000; }
+.dest-tile[data-platform='linkedin']  { --plat-accent: #0a66c2; }
 .dest-avatar { width: 38px; height: 38px; border-radius: 10px; font-size: 16px; }
 .dest-body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .dest-name { font-weight: 700; font-size: 14px; }
@@ -1757,6 +1764,14 @@ input[type='datetime-local']:focus {
   padding: 0;
 }
 .linklike:hover { text-decoration: underline; }
+/* "Forgot your password?" — small, right-aligned under the password field. */
+.forgot-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.field .forgot-link { float: right; }
 
 /* Inline field validation (e.g. password mismatch). */
 .input-error { border-color: var(--fail) !important; }

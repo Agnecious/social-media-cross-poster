@@ -184,6 +184,14 @@ SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=   # SECRET — backend only
 ```
 
+> **Supabase dashboard (not `.env`) — required for password reset & email confirmation.**
+> In Supabase → **Authentication → URL Configuration**, set the **Site URL** and
+> add each app origin's **`/reset-password`** to the **Redirect URLs** allow-list
+> (e.g. `http://localhost:4200/reset-password`, `http://localhost:8080/reset-password`,
+> `https://<your-domain>/reset-password`). The "Forgot your password?" email link
+> only redirects to allow-listed URLs — if it's missing, the reset link fails.
+> See [docs/SIGNUP_FLOW.md](./docs/SIGNUP_FLOW.md#password-reset-forgot-your-password--implemented).
+
 **Subscription plans** (prices in ZAR; all configurable with no rebuild)
 ```
 PLAN_STARTER_PRICE_ZAR=169     PLAN_PRO_PRICE_ZAR=529     PLAN_AGENCY_PRICE_ZAR=1399
@@ -262,6 +270,7 @@ Hands-on, copy-pasteable guides for verifying each hardening/SaaS feature:
 - [docs/PLATFORM_OAUTH.md](./docs/PLATFORM_OAUTH.md) — per-platform OAuth setup, testing-mode gotchas (e.g. Google "test users"), and the **going-live verification** steps (Google/Meta/TikTok app review) required before the public can connect.
 - [docs/PAYMENTS_PAYSTACK.md](./docs/PAYMENTS_PAYSTACK.md) — the Paystack billing integration: config, how the adapter + webhook signature work, testing, and going live.
 - [docs/AI_ASSISTANT.md](./docs/AI_ASSISTANT.md) — the AI Content Assistant: the Gemini (primary) → OpenRouter (fallback) provider chain, the 5 MVP tools, config (`AI_ENABLED` + keys), the `/api/ai/*` API, and how to extend it.
+- [docs/MOBILE_TESTING.md](./docs/MOBILE_TESTING.md) — testing on a physical phone/tablet over the LAN (`proxy.conf.json` + the `mobile` serve config + `npm run start:mobile`), plus the cross-platform Prisma `binaryTargets` setup.
 
 ### Getting app credentials (one-time, per platform)
 

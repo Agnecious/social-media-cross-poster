@@ -71,7 +71,7 @@ export class SupportService {
       'How can we help?',
       '',
       '',
-      '— Sent from Social Cross-Poster',
+      '— Sent from Social Cross Poster',
     ].join('\n');
 
     const href = `mailto:${to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;

@@ -10,6 +10,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { AiService } from '../../core/services/ai.service';
 import { AiConfig } from '../../core/models/ai.model';
 import { MediaType, PublishResult } from '../../core/models/platform.model';
+import { PlatformNamePipe } from '../../core/pipes/platform-name.pipe';
 import {
   AI_ACTION_GROUPS,
   AiAction,
@@ -31,7 +32,7 @@ import {
 @Component({
   selector: 'app-compose',
   standalone: true,
-  imports: [FormsModule, RouterLink, TitleCasePipe, DatePipe, UpperCasePipe],
+  imports: [FormsModule, RouterLink, TitleCasePipe, DatePipe, UpperCasePipe, PlatformNamePipe],
   templateUrl: './compose.component.html',
 })
 export class ComposeComponent implements OnInit {

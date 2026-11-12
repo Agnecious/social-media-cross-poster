@@ -13,6 +13,7 @@ import { AdminComponent } from './features/admin/admin.component';
 import { AdminDashboardComponent } from './features/admin/admin-dashboard.component';
 import { AdminLoginComponent } from './features/admin/admin-login.component';
 import { CustomerAuthComponent } from './features/customer/customer-auth.component';
+import { ResetPasswordComponent } from './features/customer/reset-password.component';
 import { BillingComponent } from './features/billing/billing.component';
 import { MockCheckoutComponent } from './features/billing/mock-checkout.component';
 import { ProfileComponent } from './features/profile/profile.component';
@@ -23,6 +24,7 @@ import { customerGuard } from './core/guards/customer.guard';
 export const routes: Routes = [
   { path: '', pathMatch: 'full', component: LandingComponent },
   { path: 'login', component: CustomerAuthComponent },
+  { path: 'reset-password', component: ResetPasswordComponent },
   // App screens now require a signed-in customer.
   { path: 'compose', component: ComposeComponent, canActivate: [customerGuard] },
   { path: 'connections', component: ConnectionsComponent, canActivate: [customerGuard] },

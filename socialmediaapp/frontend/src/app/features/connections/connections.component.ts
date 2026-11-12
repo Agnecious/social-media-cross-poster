@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { TitleCasePipe, UpperCasePipe } from '@angular/common';
+import { UpperCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PlatformService } from '../../core/services/platform.service';
 import { AuthService } from '../../core/services/auth.service';
 import { TargetService } from '../../core/services/target.service';
 import { ToastService } from '../../core/services/toast.service';
+import { PlatformNamePipe } from '../../core/pipes/platform-name.pipe';
 
 /**
  * Connections — connect/disconnect social accounts via OAuth. Supports MULTIPLE
@@ -14,7 +15,7 @@ import { ToastService } from '../../core/services/toast.service';
 @Component({
   selector: 'app-connections',
   standalone: true,
-  imports: [TitleCasePipe, UpperCasePipe, RouterLink],
+  imports: [UpperCasePipe, RouterLink, PlatformNamePipe],
   template: `
     <div class="connections">
       <header class="conn-hero">
@@ -40,7 +41,7 @@ import { ToastService } from '../../core/services/toast.service';
               <div class="conn-card-head">
                 <span class="conn-avatar" [attr.data-platform]="p.key">{{ p.key.charAt(0) | uppercase }}</span>
                 <div class="conn-meta">
-                  <strong>{{ p.key | titlecase }}</strong>
+                  <strong>{{ p.key | platformName }}</strong>
                   <span class="caps">
                     @if (p.capabilities.text) { <span class="chip">text</span> }
                     @if (p.capabilities.image) { <span class="chip">image</span> }
@@ -106,7 +107,7 @@ import { ToastService } from '../../core/services/toast.service';
                 [disabled]="busy() === p.key || atLimit(p)"
                 (click)="connect(p.key)"
               >
-                {{ busy() === p.key ? 'Connecting…' : (auth.getAccounts(p.key).length ? '+ Connect another' : 'Connect ' + (p.key | titlecase)) }}
+                {{ busy() === p.key ? 'Connecting…' : (auth.getAccounts(p.key).length ? '+ Connect another' : 'Connect ' + (p.key | platformName)) }}
               </button>
             </section>
           }

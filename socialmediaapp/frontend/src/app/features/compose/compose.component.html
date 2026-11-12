@@ -227,7 +227,7 @@
             >
               <span class="dest-avatar" [attr.data-platform]="a.platform">{{ a.platform.charAt(0) | uppercase }}</span>
               <span class="dest-body">
-                <span class="dest-name">{{ a.platform | titlecase }}</span>
+                <span class="dest-name">{{ a.platform | platformName }}</span>
                 <span class="dest-account">{{ a.label }}</span>
               </span>
               <span class="dest-state">
@@ -247,7 +247,7 @@
         @for (a of eligibleAccounts(); track a.key) {
           @if (selected().has(a.key) && a.requiresTarget) {
             <label class="field dest-target">
-              <span class="field-label">{{ a.platform | titlecase }} destination — {{ a.label }}</span>
+              <span class="field-label">{{ a.platform | platformName }} destination — {{ a.label }}</span>
               @if (targets.targetsFor(a.platform, a.accountId).length === 0) {
                 <span class="hint limit-note">
                   @if (a.platform === 'facebook') {
@@ -323,13 +323,13 @@
           <ul class="schedule-breakdown">
             @for (a of scheduleBreakdown().native; track a.key) {
               <li>
-                <strong>{{ a.platform | titlecase }}</strong> — {{ a.label }}
+                <strong>{{ a.platform | platformName }}</strong> — {{ a.label }}
                 <span class="chip ok">scheduled by the platform</span>
               </li>
             }
             @for (a of scheduleBreakdown().browser; track a.key) {
               <li>
-                <strong>{{ a.platform | titlecase }}</strong> — {{ a.label }}
+                <strong>{{ a.platform | platformName }}</strong> — {{ a.label }}
                 <span class="chip warn">needs this tab open until it posts</span>
               </li>
             }
@@ -384,7 +384,7 @@
           <li [class.ok]="r.ok" [class.fail]="!r.ok">
             <span class="result-icon">{{ r.ok ? '✓' : '✕' }}</span>
             <span class="result-text">
-              <strong>{{ r.platform | titlecase }}</strong>
+              <strong>{{ r.platform | platformName }}</strong>
               @if (r.label) { <span class="muted">— {{ r.label }}</span> }
               @if (r.ok) {
                 — posted

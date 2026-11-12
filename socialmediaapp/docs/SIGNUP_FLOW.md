@@ -178,3 +178,114 @@ billing is enabled.
 - **Gating stays server-enforced.** The app remains blocked for `pending_setup`
   regardless of what the UI shows — the client flow is convenience, not the
   security boundary.
+
+---
+
+## Password reset ("Forgot your password?") — IMPLEMENTED
+
+Email-based password reset, powered by Supabase Auth (no SMS/provider, no cost).
+
+### Flow
+
+```
+Sign in screen                Supabase                    Your app
+┌──────────────────┐          ┌─────────────┐             ┌────────────────────┐
+│ "Forgot your     │  email   │ sends reset │  user       │ /reset-password    │
+│  password?" →    │ ───────▶ │ link w/ a   │  clicks ──▶ │ (recovery session) │
+│ enter email,     │          │ 1-time token│  link       │ set new password → │
+│ "Send reset link"│          │             │             │ updateUser(pw) →   │
+└──────────────────┘          └─────────────┘             │ signed in → app    │
+                                     │                     └────────────────────┘
+                                     └── redirects to <origin>/reset-password
+```
+
+1. On the sign-in screen, **"Forgot your password?"** switches the form to a
+   reset mode (email only) and calls
+   `CustomerAuthService.requestPasswordReset(email)` →
+   `supabase.auth.resetPasswordForEmail(email, { redirectTo: <origin>/reset-password })`.
+2. The UI then shows a **generic** message ("if an account exists, we've sent a
+   link") regardless of whether the email is registered — **anti-enumeration**,
+   so the page can't be used to discover which emails have accounts.
+3. Supabase emails a link carrying a **one-time recovery token**. The link hits
+   Supabase first (token verified there), then Supabase redirects the browser to
+   `<origin>/reset-password`.
+4. `ResetPasswordComponent` waits for the recovery session (Supabase fires
+   `PASSWORD_RECOVERY`/`SIGNED_IN`), then lets the user set a new password via
+   `updateUser({ password })` and drops them into the app. An invalid/expired
+   link shows a clear "request a new one" message instead of a broken form.
+
+Code: `core/services/customer-auth.service.ts` (`requestPasswordReset`,
+`updatePassword`), `features/customer/customer-auth.component.ts` (reset mode),
+`features/customer/reset-password.component.ts`, route `/reset-password`.
+
+### REQUIRED Supabase config (easy to forget at deploy time)
+
+The reset email link returns the user to **`<origin>/reset-password`**. Supabase
+only redirects to URLs you have **explicitly allow-listed** — this is a security
+control against open-redirect/token-theft (an attacker must not be able to send
+the recovery token to their own site). This is the same idea as the per-platform
+OAuth redirect URIs.
+
+**Add every origin the app runs on to Supabase → Authentication → URL
+Configuration → Redirect URLs:**
+
+```
+http://localhost:4200/reset-password     # local dev (ng serve)
+http://localhost:8080/reset-password     # Docker (nginx)
+https://<your-domain>/reset-password     # production
+```
+
+Also set **Site URL** to your primary origin. If the redirect URL is NOT
+allow-listed, clicking the email link fails (Supabase refuses the redirect) and
+the reset never completes. The same allow-list governs the sign-up
+email-confirmation redirect, so it matters beyond password reset.
+
+> The frontend builds the redirect as `window.location.origin + '/reset-password'`,
+> so it automatically matches whatever host the user is on — you only need that
+> origin present in the allow-list.
+
+### Setup checklist — making the redirect work (config only, no code)
+
+**Effort: ~2–5 minutes in the Supabase dashboard. There is NO code to write** —
+the `/reset-password` route/component already exist and the redirect target is
+derived automatically from the browser origin. This is purely allow-listing.
+
+1. Open your project at **supabase.com** → **Authentication → URL Configuration**.
+2. **Site URL** — set to your primary origin:
+   - dev (ng serve): `http://localhost:4200`
+   - Docker (nginx): `http://localhost:8080`
+   - production: `https://<your-domain>`
+3. **Redirect URLs** — add the `/reset-password` URL for **every** environment
+   you run, one per line:
+   ```
+   http://localhost:4200/reset-password
+   http://localhost:8080/reset-password
+   https://<your-domain>/reset-password
+   ```
+   (You can also use a wildcard like `http://localhost:4200/**` if you prefer,
+   but listing `/reset-password` explicitly is the least-surprising option.)
+4. **Save.** No redeploy, no restart — it takes effect immediately.
+
+That's the whole task. If the URL for the origin a user is on isn't in the list,
+Supabase refuses the redirect and the email link dead-ends.
+
+### Email delivery (separate from the redirect)
+
+The redirect is config-only, but the user also has to *receive* the email:
+
+- **Dev/testing:** Supabase's built-in email sender works out of the box at low
+  volume (it is rate-limited and not meant for production traffic).
+- **Production:** wire your own SMTP (e.g. SendGrid, Amazon SES, Mailgun) under
+  **Authentication → Emails / SMTP Settings** so reset + confirmation emails land
+  reliably and aren't throttled. This is optional for the redirect to function,
+  but recommended before real users rely on it.
+- You can customise the reset email's wording/branding under the same
+  **Authentication → Emails → Templates** area (the "Reset Password" template).
+
+### What this is NOT (yet)
+
+- **No SMS / phone 2FA.** This is email-only reset. SMS-based reset or phone 2FA
+  would need an SMS provider (Twilio/MessageBird/etc.) + cost + a custom OTP
+  flow, or Supabase native phone auth with the member's phone registered as a
+  verified auth phone. A cheaper/stronger alternative is Supabase native **TOTP
+  MFA** (authenticator app). Tracked as a separate, larger task.

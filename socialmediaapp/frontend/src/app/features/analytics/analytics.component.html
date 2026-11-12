@@ -38,7 +38,7 @@
           <div class="account-id">
             <span class="account-avatar" [attr.data-platform]="r.platform">{{ r.platform.charAt(0) | uppercase }}</span>
             <div>
-              <strong>{{ r.platform | titlecase }}</strong>
+              <strong>{{ r.platform | platformName }}</strong>
               <span class="account-sub">{{ r.label }}</span>
             </div>
           </div>

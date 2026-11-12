@@ -25,10 +25,10 @@ import { ToastContainerComponent } from './core/components/toast-container.compo
 
     @if (!isChromeless()) {
       <header class="app-header">
-        <div class="brand">
+        <a class="brand" routerLink="/" (click)="closeNav()" aria-label="Social Cross Poster — home">
           <span class="brand-mark">◆</span>
-          <span>Social Cross-Poster</span>
-        </div>
+          <span>Social Cross Poster</span>
+        </a>
         <button
           class="nav-toggle"
           type="button"
@@ -40,7 +40,6 @@ import { ToastContainerComponent } from './core/components/toast-container.compo
           <span></span><span></span><span></span>
         </button>
         <nav class="app-nav" [class.open]="navOpen()">
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeNav()">Home</a>
           <a routerLink="/compose" routerLinkActive="active" (click)="closeNav()">Compose</a>
           <a routerLink="/connections" routerLinkActive="active" (click)="closeNav()">Connections</a>
           <a routerLink="/ai" routerLinkActive="active" (click)="closeNav()">AI Assistant</a>
@@ -123,7 +122,7 @@ import { ToastContainerComponent } from './core/components/toast-container.compo
         <div class="footer-brand">
           <div class="brand">
             <span class="brand-mark">◆</span>
-            <span>Social Media Cross Poster</span>
+            <span>Social Cross Poster</span>
           </div>
           <p class="footer-tagline">
             No more jumping between apps. Post, schedule, and automate across all
@@ -236,6 +235,7 @@ export class AppComponent implements OnInit {
       url === '/' ||
       url === '' ||
       url.startsWith('/login') ||
+      url.startsWith('/reset-password') ||
       url.startsWith('/admin-login') ||
       url.startsWith('/mock-checkout')
     );

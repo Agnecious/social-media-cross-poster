@@ -1,9 +1,9 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { TitleCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AdminService } from '../../core/services/admin.service';
 import { PlatformService } from '../../core/services/platform.service';
 import { AdminPlatformConfig, AdminPlatformUpdate } from '../../core/models/admin.model';
+import { PlatformNamePipe } from '../../core/pipes/platform-name.pipe';
 
 /**
  * Administrator — edit the per-platform configuration stored in `.env`
@@ -18,7 +18,7 @@ import { AdminPlatformConfig, AdminPlatformUpdate } from '../../core/models/admi
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [FormsModule, TitleCasePipe],
+  imports: [FormsModule, PlatformNamePipe],
   templateUrl: './admin.component.html',
 })
 export class AdminComponent implements OnInit {

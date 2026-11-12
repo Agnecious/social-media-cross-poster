@@ -89,6 +89,23 @@ export class CustomerAuthService {
     if (error) throw new Error(error.message);
   }
 
+  /**
+   * Send a password-reset email. Supabase emails the customer a link that
+   * returns to `${origin}/reset-password` carrying a recovery token; landing
+   * there establishes a short-lived recovery session, after which
+   * `updatePassword()` sets the new password.
+   *
+   * We don't reveal whether the email exists — the caller always shows the same
+   * "if an account exists, we've sent a link" message (anti-enumeration).
+   */
+  async requestPasswordReset(email: string): Promise<void> {
+    const redirectTo = `${window.location.origin}/reset-password`;
+    const { error } = await this.supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
+    // Surface only genuine transport errors; "user not found" style messages
+    // are intentionally swallowed by the caller's generic success copy.
+    if (error) throw new Error(error.message);
+  }
+
   async signOut(): Promise<void> {
     await this.supabase.auth.signOut();
     this.session.set(null);

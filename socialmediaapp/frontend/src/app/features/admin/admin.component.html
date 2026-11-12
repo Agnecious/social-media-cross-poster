@@ -29,7 +29,7 @@
       >
         @for (p of adminSvc.platforms(); track p.key) {
           <option [value]="p.key">
-            {{ p.key | titlecase }} — {{ p.enabled ? 'enabled' : 'disabled' }}
+            {{ p.key | platformName }} — {{ p.enabled ? 'enabled' : 'disabled' }}
           </option>
         }
       </select>
@@ -38,7 +38,7 @@
     @if (selectedConfig(); as p) {
       <div class="admin-platform">
         <div class="admin-platform-head">
-          <h2>{{ p.key | titlecase }}</h2>
+          <h2>{{ p.key | platformName }}</h2>
           <label class="switch">
             <input
               type="checkbox"
@@ -107,7 +107,7 @@
             [disabled]="savingKey() === p.key"
             (click)="save(p.key)"
           >
-            {{ savingKey() === p.key ? 'Saving…' : 'Save ' + (p.key | titlecase) }}
+            {{ savingKey() === p.key ? 'Saving…' : 'Save ' + (p.key | platformName) }}
           </button>
           @if (savedKey() === p.key) {
             <span class="badge ok">Saved</span>

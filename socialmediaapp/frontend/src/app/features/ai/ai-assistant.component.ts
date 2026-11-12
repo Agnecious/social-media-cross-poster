@@ -4,6 +4,7 @@ import { TitleCasePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { AiService } from '../../core/services/ai.service';
 import { ToastService } from '../../core/services/toast.service';
+import { PlatformNamePipe } from '../../core/pipes/platform-name.pipe';
 import {
   AiConfig,
   AiExpandFormat,
@@ -51,7 +52,7 @@ interface OutputCard {
 @Component({
   selector: 'app-ai-assistant',
   standalone: true,
-  imports: [FormsModule, TitleCasePipe, RouterLink],
+  imports: [FormsModule, TitleCasePipe, RouterLink, PlatformNamePipe],
   templateUrl: './ai-assistant.component.html',
 })
 export class AiAssistantComponent implements OnInit {
