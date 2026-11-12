@@ -1,0 +1,7 @@
+XPublisher=1
+Factory=1
+config=1
+auth=1
+PublishService=1
+PlatformPublisher=1
+AiService=1

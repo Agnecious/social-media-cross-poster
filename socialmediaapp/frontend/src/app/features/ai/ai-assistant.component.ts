@@ -102,8 +102,8 @@ export class AiAssistantComponent implements OnInit {
   readonly busy = signal(false);
 
   // --- Platform-content options ---
-  readonly allPlatforms: AiPlatform[] = ['facebook', 'instagram', 'linkedin', 'tiktok', 'youtube'];
-  readonly selectedPlatforms = signal<Set<AiPlatform>>(new Set(['facebook', 'instagram', 'linkedin', 'tiktok', 'youtube']));
+  readonly allPlatforms: AiPlatform[] = ['facebook', 'instagram', 'x', 'linkedin', 'tiktok', 'youtube'];
+  readonly selectedPlatforms = signal<Set<AiPlatform>>(new Set(['facebook', 'instagram', 'x', 'linkedin', 'tiktok', 'youtube']));
   readonly tones: AiTone[] = ['professional', 'casual', 'corporate', 'sales', 'educational', 'funny', 'motivational'];
   readonly platformTone = signal<AiTone | ''>('');
 
@@ -313,6 +313,7 @@ export class AiAssistantComponent implements OnInit {
     const cards: OutputCard[] = [];
     if (r.facebook) cards.push({ label: 'Facebook', text: r.facebook });
     if (r.instagram) cards.push({ label: 'Instagram caption', text: r.instagram });
+    if (r.x) cards.push({ label: 'X (Twitter)', text: r.x });
     if (r.linkedin) cards.push({ label: 'LinkedIn', text: r.linkedin });
     if (r.tiktok) cards.push({ label: 'TikTok caption', text: r.tiktok });
     if (r.youtubeTitle) cards.push({ label: 'YouTube title', text: r.youtubeTitle });
@@ -334,6 +335,7 @@ export class AiAssistantComponent implements OnInit {
     const labels: Record<string, string> = {
       facebook: 'Facebook',
       instagram: 'Instagram caption',
+      x: 'X (Twitter)',
       linkedin: 'LinkedIn',
       tiktok: 'TikTok caption',
       youtubeTitle: 'YouTube title',

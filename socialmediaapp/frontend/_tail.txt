@@ -1,0 +1,17 @@
+﻿
+> socialmediaapp-frontend@1.0.0 build
+> ng build
+
+> Building...
+âˆš Building...
+Application bundle generation failed. [22.019 seconds] - 2026-11-12T16:25:43.077Z
+
+[31mX [41;31m[[41;97mERROR[41;31m][0m [1mTS2352: Conversion of type 'PlatformContentResult' to type 'Record<string, string | undefined>' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Index signature for type 'string' is missing in type 'PlatformContentResult'.[0m [1m[35m[plugin angular-compiler][0m
+
+    src/app/features/compose/compose.component.ts:519:15:
+[37m      519 â”‚ ...        : ([32mres as Record<string, string | undefined>[37m)[platform...
+          â•µ               [32m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+EXIT=0 

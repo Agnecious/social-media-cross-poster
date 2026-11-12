@@ -4,6 +4,16 @@
 
 generator client {
   provider = "prisma-client-js"
+  // Cross-platform query-engine binaries. "native" = whatever machine runs
+  // `prisma generate`; the explicit targets make the generated client portable
+  // across the team's machines + the Docker image without regenerating:
+  //   darwin        = Intel Mac
+  //   darwin-arm64  = Apple Silicon (M1/M2/M3)
+  //   windows       = Windows
+  //   debian-openssl-3.0.x = the Linux container (node:* Debian-based image)
+  // If you copy node_modules between OSes, run `npm run prisma:generate` once
+  // on each OS (or keep all targets here and generate once per OS).
+  binaryTargets = ["native", "darwin", "darwin-arm64", "windows", "debian-openssl-3.0.x"]
 }
 
 datasource db {

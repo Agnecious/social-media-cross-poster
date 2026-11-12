@@ -4,7 +4,7 @@
  */
 
 /** Platforms the assistant can write for. */
-export type AiPlatform = 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'youtube';
+export type AiPlatform = 'facebook' | 'instagram' | 'linkedin' | 'tiktok' | 'youtube' | 'x';
 
 /** Rewrite tones supported by the backend. */
 export type AiTone =
@@ -48,6 +48,7 @@ export interface PlatformContentResult {
   instagram?: string;
   linkedin?: string;
   tiktok?: string;
+  x?: string;
   youtubeTitle?: string;
   youtubeDescription?: string;
   hashtags: string[];
@@ -106,6 +107,20 @@ export interface ExpandResponse {
 
 export interface ShortenResponse {
   shortened: string;
+  provider: string;
+}
+
+/** Grammar/spelling correction (POST /api/ai/proofread). */
+export interface ProofreadResponse {
+  corrected: string;
+  /** Short notes on the kinds of fixes made (may be empty). */
+  changes: string[];
+  provider: string;
+}
+
+/** SEO keywords/tags for discoverability (POST /api/ai/seo-keywords). */
+export interface SeoKeywordsResponse {
+  keywords: string[];
   provider: string;
 }
 

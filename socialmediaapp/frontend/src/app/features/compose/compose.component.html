@@ -37,6 +37,130 @@
             </div>
           }
         </div>
+
+        <!-- AI Assist: optional, collapses by default. Manual composing is
+             unaffected when AI is off. -->
+        <div class="ai-assist">
+          <button
+            type="button"
+            class="ai-assist-toggle"
+            [class.open]="aiOpen()"
+            [attr.aria-expanded]="aiOpen()"
+            (click)="toggleAiPanel()"
+          >
+            <span class="ai-spark">✨</span>
+            <span class="ai-assist-toggle-text">AI assist</span>
+            @if (canRevert()) {
+              <span class="ai-mini-badge" title="AI has edited this caption">edited</span>
+            }
+            <span class="ai-assist-caret">{{ aiOpen() ? '▴' : '▾' }}</span>
+          </button>
+
+          @if (aiOpen()) {
+            <div class="ai-assist-body">
+              <!-- Availability states -->
+              @if (!aiConfigLoaded()) {
+                <p class="hint">Checking AI availability…</p>
+              } @else if (aiPlanBlocked() || aiUpgrade()) {
+                <div class="ai-locked">
+                  <strong>✨ AI assist is on Pro &amp; Agency</strong>
+                  <span>Upgrade your plan to rewrite, optimize and generate content right here.</span>
+                  <a class="btn primary small" routerLink="/billing">Choose a plan →</a>
+                </div>
+              } @else if (!aiAvailable()) {
+                <p class="hint ai-off">
+                  The AI assistant is currently turned off or not configured. You can still write and publish manually.
+                </p>
+              } @else {
+                <!-- Action groups -->
+                @for (group of aiGroups; track group.key) {
+                  <div class="ai-group">
+                    <div class="ai-group-head">
+                      <strong>{{ group.title }}</strong>
+                      <span class="hint">{{ group.hint }}</span>
+                    </div>
+                    <div class="ai-chip-row">
+                      @for (action of group.actions; track action.id) {
+                        <button
+                          type="button"
+                          class="ai-chip-btn"
+                          [attr.data-platform]="action.platform || null"
+                          [disabled]="aiBusy()"
+                          [title]="action.hint"
+                          (click)="runAi(action)"
+                        >
+                          <span class="ai-chip-icon">{{ action.icon }}</span>
+                          <span class="ai-chip-label">{{ action.label }}</span>
+                          @if (aiRunning() === action.id) { <span class="ai-chip-spin">⏳</span> }
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (aiProvider()) {
+                  <p class="hint ai-provider">Powered by {{ aiProvider() | titlecase }}</p>
+                }
+              }
+
+              <!-- Caption preview (Apply / Edit / discard) -->
+              @if (aiPreview(); as preview) {
+                <div class="ai-preview">
+                  <div class="ai-preview-head">
+                    <span class="ai-preview-title">{{ preview.action.icon }} {{ preview.action.label }} — preview</span>
+                    <div class="ai-preview-actions">
+                      <button type="button" class="btn small" (click)="toggleEditPreview()">
+                        {{ preview.editing ? 'Done editing' : 'Edit' }}
+                      </button>
+                      <button type="button" class="btn ghost small" (click)="discardPreview()">Discard</button>
+                      <button type="button" class="btn primary small" (click)="applyPreview()">Apply</button>
+                    </div>
+                  </div>
+                  @if (preview.editing) {
+                    <textarea
+                      rows="5"
+                      class="ai-preview-text editable"
+                      [ngModel]="preview.text"
+                      (ngModelChange)="updatePreviewText($event)"
+                    ></textarea>
+                  } @else {
+                    <p class="ai-preview-text">{{ preview.text }}</p>
+                  }
+                  <span class="hint">Your original caption is kept until you press Apply — and you can revert after.</span>
+                </div>
+              }
+
+              <!-- Asset cards (hashtags / titles / SEO / CTAs) -->
+              @if (aiCards().length > 0) {
+                <div class="ai-assets">
+                  <div class="ai-assets-head">
+                    <strong>{{ aiCardsLabel() }}</strong>
+                    <button type="button" class="btn ghost small" (click)="clearAiCards()">Clear</button>
+                  </div>
+                  <div class="ai-asset-list">
+                    @for (card of aiCards(); track card.label) {
+                      <div class="ai-asset">
+                        <span class="ai-asset-text">{{ card.text }}</span>
+                        <span class="ai-asset-btns">
+                          <button type="button" class="btn ghost small" (click)="copyText(card.text)">Copy</button>
+                          <button type="button" class="btn small" (click)="appendToCaption(card)">Append</button>
+                        </span>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Revert control + error -->
+              @if (canRevert()) {
+                <button type="button" class="ai-revert" (click)="revertCaption()">↶ Revert caption</button>
+              }
+              @if (aiError() && !aiUpgrade()) {
+                <p class="error ai-error">{{ aiError() }}</p>
+              }
+            </div>
+          }
+        </div>
       </div>
 
       <!-- Media type -->
@@ -157,7 +281,7 @@
   </div>
 
   <!-- Actions -->
-  <section class="compose-panel">
+  <section class="compose-panel actions-panel">
     <div class="compose-actions">
       <div class="action-group">
         <button class="btn primary" [disabled]="!canPublish()" (click)="publish()">

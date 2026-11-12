@@ -1278,6 +1278,7 @@ input[type='datetime-local']:focus {
 .account-avatar[data-platform='instagram'] { background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af); }
 .account-avatar[data-platform='youtube']   { background: #ff0000; }
 .account-avatar[data-platform='tiktok']    { background: #010101; }
+.account-avatar[data-platform='x']         { background: #000000; }
 
 .inline-field { max-width: 380px; margin: 14px 0 0; }
 
@@ -1411,6 +1412,7 @@ input[type='datetime-local']:focus {
 .conn-avatar[data-platform='instagram'], .dest-avatar[data-platform='instagram'] { background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af); }
 .conn-avatar[data-platform='youtube'],   .dest-avatar[data-platform='youtube']   { background: #ff0000; }
 .conn-avatar[data-platform='tiktok'],    .dest-avatar[data-platform='tiktok']    { background: #010101; }
+.conn-avatar[data-platform='x'],         .dest-avatar[data-platform='x']         { background: #000000; }
 
 /* --- Connections (modernised) --- */
 .connections { display: flex; flex-direction: column; gap: 18px; }
@@ -1459,6 +1461,7 @@ input[type='datetime-local']:focus {
 .conn-card[data-platform='instagram'] { --plat-accent: #dd2a7b; }
 .conn-card[data-platform='youtube']   { --plat-accent: #ff0000; }
 .conn-card[data-platform='tiktok']    { --plat-accent: #010101; }
+.conn-card[data-platform='x']         { --plat-accent: #000000; }
 
 .conn-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .conn-avatar { width: 44px; height: 44px; border-radius: 12px; font-size: 19px; }
@@ -1582,6 +1585,7 @@ input[type='datetime-local']:focus {
 .dest-tile[data-platform='instagram'] { --plat-accent: #dd2a7b; }
 .dest-tile[data-platform='youtube']   { --plat-accent: #ff0000; }
 .dest-tile[data-platform='tiktok']    { --plat-accent: #010101; }
+.dest-tile[data-platform='x']         { --plat-accent: #000000; }
 .dest-avatar { width: 38px; height: 38px; border-radius: 10px; font-size: 16px; }
 .dest-body { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
 .dest-name { font-weight: 700; font-size: 14px; }
@@ -2390,4 +2394,288 @@ input[type='datetime-local']:focus {
   .ai-scores {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* ===================================================================== */
+/* Compose — AI Assist panel (integrated into the caption field)         */
+/* ===================================================================== */
+.ai-assist {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.ai-assist-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ai-assist-toggle:hover { background: var(--surface); }
+.ai-spark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6d28d9, #2563eb);
+  color: #fff;
+  font-size: 14px;
+}
+.ai-assist-toggle-text { flex: 1; text-align: left; }
+.ai-assist-caret { color: var(--muted); font-size: 12px; }
+.ai-mini-badge {
+  background: var(--selected-tint);
+  color: var(--primary);
+  border-radius: 20px;
+  padding: 2px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ai-assist-body {
+  padding: 4px 14px 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ai-group { display: flex; flex-direction: column; gap: 8px; }
+.ai-group-head { display: flex; flex-direction: column; gap: 2px; margin-top: 10px; }
+.ai-group-head strong { font-size: 13.5px; }
+.ai-group-head .hint { margin: 0; }
+
+.ai-chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.ai-chip-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 13px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s, transform 0.05s;
+  /* Comfortable, tappable target on touch devices. */
+  min-height: 40px;
+}
+.ai-chip-btn:hover:not(:disabled) { border-color: var(--primary); }
+.ai-chip-btn:active:not(:disabled) { transform: translateY(1px); }
+.ai-chip-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.ai-chip-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 800;
+}
+/* Platform-tinted icon badge for platform-targeted actions. */
+.ai-chip-btn[data-platform] .ai-chip-icon { color: #fff; padding: 0 5px; }
+.ai-chip-btn[data-platform='facebook']  .ai-chip-icon { background: #1877f2; }
+.ai-chip-btn[data-platform='instagram'] .ai-chip-icon { background: linear-gradient(135deg, #f58529, #dd2a7b 55%, #8134af); }
+.ai-chip-btn[data-platform='linkedin']  .ai-chip-icon { background: #0a66c2; }
+.ai-chip-btn[data-platform='youtube']   .ai-chip-icon { background: #ff0000; }
+.ai-chip-btn[data-platform='tiktok']    .ai-chip-icon { background: #010101; }
+.ai-chip-btn[data-platform='x']         .ai-chip-icon { background: #000000; }
+.ai-chip-spin { font-size: 12px; }
+
+.ai-note { margin: 0; }
+.ai-provider { margin: 0; font-style: italic; }
+.ai-off { margin: 8px 0; }
+
+/* Locked (upgrade) state. */
+.ai-locked {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px dashed #8b5cf6;
+  background: linear-gradient(135deg, rgba(109, 40, 217, 0.08), rgba(37, 99, 235, 0.06));
+}
+.ai-locked strong { font-size: 14px; }
+.ai-locked span { font-size: 13px; color: var(--muted); }
+.ai-locked .btn.small { margin-top: 4px; }
+
+/* Caption preview card. */
+.ai-preview {
+  border: 1px solid var(--primary);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ai-preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.ai-preview-title { font-weight: 700; font-size: 13.5px; }
+.ai-preview-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.ai-preview-text {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+  font-size: 14px;
+  color: var(--text);
+}
+.ai-preview-text.editable { background: var(--surface-2); }
+
+/* Asset cards. */
+.ai-assets { display: flex; flex-direction: column; gap: 10px; }
+.ai-assets-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ai-assets-head strong { font-size: 13.5px; }
+.ai-asset-list { display: flex; flex-direction: column; gap: 8px; }
+.ai-asset {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.ai-asset-text { font-size: 13.5px; line-height: 1.5; word-break: break-word; }
+.ai-asset-btns { flex: none; display: flex; gap: 6px; }
+
+.ai-revert {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 10px;
+  padding: 8px 14px;
+  font: inherit;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  min-height: 40px;
+}
+.ai-revert:hover { border-color: var(--primary); color: var(--text); }
+.ai-error { margin: 0; }
+
+/* ===================================================================== */
+/* Compose — mobile-first refinements                                    */
+/* The .compose-grid already collapses to one column at 860px. These add */
+/* a sticky action bar, touch-sized controls, and tidy stacking on small */
+/* screens so Compose feels native-quality on phones.                    */
+/* ===================================================================== */
+
+/* Make the destination tiles and selects comfortable to tap everywhere. */
+.dest-tile { min-height: 56px; }
+.compose select,
+.compose input[type='datetime-local'],
+.compose input[type='url'],
+.compose input[type='file'] { min-height: 44px; }
+
+@media (max-width: 760px) {
+  /* Caption textarea: a touch taller so it's easy to type into on phones. */
+  .compose textarea { min-height: 120px; font-size: 16px; } /* 16px avoids iOS zoom-on-focus */
+  .compose input[type='url'],
+  .compose select { font-size: 16px; }
+
+  /* AI chips go full-ish width and wrap into a comfortable grid. */
+  .ai-chip-row { gap: 8px; }
+  .ai-chip-btn { flex: 1 1 calc(50% - 8px); justify-content: flex-start; }
+
+  /* Preview actions stretch to full-width, stacked and tappable. */
+  .ai-preview-actions { width: 100%; }
+  .ai-preview-actions .btn { flex: 1; justify-content: center; }
+
+  /* Asset rows stack text above the buttons. */
+  .ai-asset { flex-direction: column; align-items: stretch; }
+  .ai-asset-btns { justify-content: stretch; }
+  .ai-asset-btns .btn { flex: 1; justify-content: center; }
+
+  /*
+   * Sticky publish/schedule bar: the actions panel pins to the bottom of the
+   * viewport so "Publish" is always reachable without scrolling. Padding +
+   * safe-area inset keeps it clear of the gesture bar / virtual keyboard.
+   */
+  .compose .compose-panel.actions-panel {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    margin: 0 -16px -16px; /* bleed to the screen edges inside the padded main */
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -6px 20px rgba(15, 23, 42, 0.12);
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  }
+  [data-theme='dark'] .compose .compose-panel.actions-panel {
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.5);
+  }
+  .compose-actions { gap: 10px; }
+  .compose-actions .btn { min-height: 48px; } /* primary tap target */
+}
+
+/* Phones: single-column AI chips for the roomiest tap targets. */
+@media (max-width: 460px) {
+  .ai-chip-btn { flex: 1 1 100%; }
+  .ai-preview-actions { flex-direction: column; }
+  .ai-preview-actions .btn { width: 100%; }
+}
+
+/* ===================================================================== */
+/* Compose — tablet & desktop tiers (mobile-first: base is single-column) */
+/* ===================================================================== */
+
+/*
+ * Tablet (768–1024px): the two panels sit side-by-side but the destination
+ * pickers and previews still stack vertically within each panel. The sticky
+ * action bar from the phone rules is released here (enough height to scroll
+ * comfortably), so Publish lives at the natural end of the flow.
+ */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .compose-grid { grid-template-columns: 1fr 1fr; gap: 16px; }
+  /* Keep AI chips in a tidy two-up so labels stay readable. */
+  .ai-chip-btn { flex: 0 1 auto; }
+}
+
+/*
+ * Desktop (1024px+): roomier workspace. Give the "write" panel a touch more
+ * width than the destinations list so long captions have space, and widen the
+ * AI preview for side-by-side reading.
+ */
+@media (min-width: 1024px) {
+  .compose-grid { grid-template-columns: 1.15fr 0.85fr; gap: 20px; }
+}
+
+/*
+ * Destination previews / target pickers always stack vertically (they're
+ * full-width labels + selects) — explicit here so they never try to sit
+ * side-by-side on any breakpoint.
+ */
+.dest-target { display: block; width: 100%; }
+.dest-target select { width: 100%; }
+
+/* Respect reduced-motion: drop the chip/tile micro-animations. */
+@media (prefers-reduced-motion: reduce) {
+  .ai-chip-btn,
+  .dest-tile,
+  .compose-actions .btn { transition: none; }
 }

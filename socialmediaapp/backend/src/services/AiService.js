@@ -22,6 +22,7 @@ export const SUPPORTED_PLATFORMS = Object.freeze([
   'linkedin',
   'tiktok',
   'youtube',
+  'x',
 ]);
 
 /** Allowed rewrite tones. */
@@ -145,8 +146,10 @@ export async function generatePlatformContent({ content, platforms, tone }, log)
     'You are an expert social media copywriter. Adapt one idea into optimized, ' +
     'platform-native content. Respect each platform: Facebook = friendly and ' +
     'community-focused; Instagram = punchy caption with tasteful emojis; LinkedIn = ' +
-    'professional and insight-led; TikTok = short, trendy, hook-first; YouTube = a ' +
-    'clickable title AND a rich description. Keep the core message intact.' +
+    'professional and insight-led; TikTok = short, trendy, hook-first; X (Twitter) = ' +
+    'concise and punchy, MUST be 280 characters or fewer, hook-first, 1-2 tasteful ' +
+    'hashtags max; YouTube = a clickable title AND a rich description. Keep the core ' +
+    'message intact.' +
     toneLine +
     ' ' +
     JSON_ONLY;
@@ -463,6 +466,79 @@ export async function shortenContent({ content, format }, log) {
 }
 
 /**
+ * 11) Proofread — fix grammar, spelling and punctuation WITHOUT changing the
+ * voice, meaning or formatting. Returns the corrected text plus a short list of
+ * the kinds of fixes made (for a subtle "what changed" hint in the UI).
+ * @param {object} args
+ * @param {string} args.content
+ * @param {object} [log]
+ * @returns {Promise<{corrected:string, changes:string[], provider:string}>}
+ */
+export async function proofread({ content }, log) {
+  const text = cleanInput(content);
+  const system =
+    'You are a meticulous proofreader. Correct grammar, spelling, punctuation and ' +
+    'obvious typos while PRESERVING the original meaning, tone, voice, emojis, ' +
+    'hashtags, @mentions, URLs and line breaks. Do not rewrite style or add new ' +
+    'ideas. If the text is already correct, return it unchanged. ' +
+    JSON_ONLY;
+  const user =
+    `Proofread and correct this text:\n"""${text}"""\n\n` +
+    'Return JSON: {"corrected": "<text>", "changes": ["<short note>", ...]}. ' +
+    'List at most 5 brief notes describing the kinds of corrections made (e.g. ' +
+    '"fixed spelling", "comma splice"); use an empty array if nothing changed.';
+
+  const { text: raw, provider } = await generateWithFallback(
+    { system, user, maxTokens: 1500, temperature: 0.2 },
+    log
+  );
+  const parsed = extractJson(raw);
+  const corrected = String(parsed.corrected ?? '').trim();
+  if (!corrected) throw new Error('The AI did not return corrected text.');
+  const changes = toStringList(parsed.changes, 5);
+  return { corrected, changes, provider };
+}
+
+/**
+ * 12) SEO keywords/tags — discoverability tags for YouTube (and other search-
+ * driven platforms). Plain keywords (no leading '#'), ordered most → least
+ * relevant, suitable for a YouTube "tags" field.
+ * @param {object} args
+ * @param {string} args.content
+ * @param {number} [args.count]  how many keywords (default 15, clamped 5..30)
+ * @param {object} [log]
+ * @returns {Promise<{keywords:string[], provider:string}>}
+ */
+export async function seoKeywords({ content, count }, log) {
+  const text = cleanInput(content);
+  const n = Math.min(30, Math.max(5, Number(count) || 15));
+  const system =
+    'You are a YouTube SEO specialist. Produce search-optimized keywords/tags that ' +
+    'maximize discoverability: a mix of short head terms and longer-tail phrases ' +
+    'people actually search for. Plain text, no leading "#", no quotes, ordered ' +
+    'most to least relevant. ' +
+    JSON_ONLY;
+  const user =
+    `Generate ${n} SEO keywords/tags for this video/content:\n"""${text}"""\n\n` +
+    'Return JSON: {"keywords": ["<keyword>", ...]}.';
+
+  const { text: raw, provider } = await generateWithFallback(
+    { system, user, maxTokens: 500, temperature: 0.5 },
+    log
+  );
+  const parsed = extractJson(raw);
+  // Strip any stray '#' the model adds, then de-dupe/trim.
+  const keywords = toStringList(
+    (Array.isArray(parsed.keywords) ? parsed.keywords : []).map((k) =>
+      String(k ?? '').replace(/^#+/, '').trim()
+    ),
+    n
+  );
+  if (keywords.length === 0) throw new Error('The AI did not return any keywords.');
+  return { keywords, provider };
+}
+
+/**
  * 10) Complete content pack — everything in one call: platform-specific posts,
  * hashtags, titles, CTAs and a summary. One model call keeps it cheap and
  * internally consistent (the same idea drives every output).
@@ -487,7 +563,8 @@ export async function completePack({ content, platforms, tone }, log) {
     'internally-consistent content pack: platform-native posts, hashtags, title ' +
     'options, call-to-action phrases and a short summary. Respect each platform ' +
     '(Facebook friendly, Instagram punchy + emojis, LinkedIn professional, TikTok ' +
-    'hook-first, YouTube clickable title + rich description).' +
+    'hook-first, X/Twitter concise ≤280 chars hook-first, YouTube clickable title + ' +
+    'rich description).' +
     toneLine +
     ' ' +
     JSON_ONLY;

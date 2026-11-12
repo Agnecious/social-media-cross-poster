@@ -8,6 +8,7 @@ export const PLATFORM_KEYS = Object.freeze({
   instagram: 'INSTAGRAM',
   youtube: 'YOUTUBE',
   tiktok: 'TIKTOK',
+  x: 'X',
 });
 
 /**

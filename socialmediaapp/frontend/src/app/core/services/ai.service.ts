@@ -14,7 +14,9 @@ import {
   ExpandResponse,
   HashtagsResponse,
   PlatformContentResponse,
+  ProofreadResponse,
   RewriteResponse,
+  SeoKeywordsResponse,
   ShortenResponse,
   TitlesResponse,
   TranslateResponse,
@@ -85,6 +87,16 @@ export class AiService {
   /** Shorten long content into a compact format. */
   shorten(input: { content: string; format: AiShortenFormat }): Promise<ShortenResponse> {
     return firstValueFrom(this.http.post<ShortenResponse>(`${this.base}/shorten`, input));
+  }
+
+  /** Fix grammar, spelling & punctuation while preserving meaning and tone. */
+  proofread(input: { content: string }): Promise<ProofreadResponse> {
+    return firstValueFrom(this.http.post<ProofreadResponse>(`${this.base}/proofread`, input));
+  }
+
+  /** Generate SEO keywords/tags (discoverability) — ideal for YouTube. */
+  seoKeywords(input: { content: string; count?: number }): Promise<SeoKeywordsResponse> {
+    return firstValueFrom(this.http.post<SeoKeywordsResponse>(`${this.base}/seo-keywords`, input));
   }
 
   /** One-click: platform posts + hashtags + titles + CTAs + summary. */

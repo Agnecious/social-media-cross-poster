@@ -20,6 +20,8 @@ import {
   expandContent,
   shortenContent,
   completePack,
+  proofread,
+  seoKeywords,
   SUPPORTED_PLATFORMS,
   SUPPORTED_TONES,
   EXPAND_FORMATS,
@@ -176,6 +178,8 @@ router.post('/ctas', ...genGuards, handle('ctas', generateCtas));
 router.post('/analyze', ...genGuards, handle('analyze', analyzeContent));
 router.post('/expand', ...genGuards, handle('expand', expandContent));
 router.post('/shorten', ...genGuards, handle('shorten', shortenContent));
+router.post('/proofread', ...genGuards, handle('proofread', proofread));
+router.post('/seo-keywords', ...genGuards, handle('seo_keywords', seoKeywords));
 router.post('/complete-pack', ...genGuards, handle('complete_pack', completePack));
 
 export default router;

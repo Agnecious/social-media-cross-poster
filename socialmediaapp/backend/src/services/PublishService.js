@@ -42,8 +42,8 @@ export class PublishService {
   }
 
   /** Exchange an OAuth code for a token for a single platform. */
-  async exchangeCode(platform, code) {
-    return createPublisher(platform).exchangeCode(code);
+  async exchangeCode(platform, code, state) {
+    return createPublisher(platform).exchangeCode(code, state);
   }
 
   /** Resolve a connected account's identity (id + label) for a platform. */

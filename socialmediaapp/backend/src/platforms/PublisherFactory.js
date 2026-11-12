@@ -3,6 +3,7 @@ import { FacebookPublisher } from './FacebookPublisher.js';
 import { InstagramPublisher } from './InstagramPublisher.js';
 import { YouTubePublisher } from './YouTubePublisher.js';
 import { TikTokPublisher } from './TikTokPublisher.js';
+import { XPublisher } from './XPublisher.js';
 
 /**
  * Factory — maps a platform key to its concrete adapter (Strategy).
@@ -14,6 +15,7 @@ const REGISTRY = {
   instagram: InstagramPublisher,
   youtube: YouTubePublisher,
   tiktok: TikTokPublisher,
+  x: XPublisher,
 };
 
 /**

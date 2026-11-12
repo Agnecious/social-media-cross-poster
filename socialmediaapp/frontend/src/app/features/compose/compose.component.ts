@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { TitleCasePipe, DatePipe, UpperCasePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -7,7 +7,16 @@ import { AuthService } from '../../core/services/auth.service';
 import { PublishService, PublishTarget } from '../../core/services/publish.service';
 import { TargetService, accountKey } from '../../core/services/target.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AiService } from '../../core/services/ai.service';
+import { AiConfig } from '../../core/models/ai.model';
 import { MediaType, PublishResult } from '../../core/models/platform.model';
+import {
+  AI_ACTION_GROUPS,
+  AiAction,
+  AiActionId,
+  AiOutputCard,
+  CaptionVersion,
+} from './compose-ai';
 
 /**
  * Compose — write once, then pick which connected ACCOUNTS to post to.
@@ -25,12 +34,13 @@ import { MediaType, PublishResult } from '../../core/models/platform.model';
   imports: [FormsModule, RouterLink, TitleCasePipe, DatePipe, UpperCasePipe],
   templateUrl: './compose.component.html',
 })
-export class ComposeComponent {
+export class ComposeComponent implements OnInit {
   readonly platformSvc = inject(PlatformService);
   readonly auth = inject(AuthService);
   readonly targets = inject(TargetService);
   private readonly publishSvc = inject(PublishService);
   private readonly toast = inject(ToastService);
+  private readonly ai = inject(AiService);
 
   constructor() {
     // When connected accounts (re)load — e.g. after a page refresh — make sure
@@ -343,6 +353,352 @@ export class ComposeComponent {
     window.clearTimeout(timerId);
     this.browserQueued.update((q) => q.filter((item) => item.timerId !== timerId));
   }
+
+  // ===========================================================================
+  // AI Assistant — integrated into the caption field.
+  //
+  // The caption lives in `text`. AI never mutates it directly: a caption-style
+  // action produces a PREVIEW the user can Apply / Edit / discard, and the
+  // original is always preserved in `versions` so the user can revert. Asset
+  // actions (hashtags, titles, SEO) produce copy-able/append-able cards. All AI
+  // is optional — manual composing and publishing work unchanged if AI is off.
+  // ===========================================================================
+
+  readonly aiGroups = AI_ACTION_GROUPS;
+
+  /** Capability probe (enabled/configured/plan) — null until loaded. */
+  readonly aiConfig = signal<AiConfig | null>(null);
+  readonly aiConfigLoaded = signal(false);
+  /** Whether the whole AI panel is expanded. */
+  readonly aiOpen = signal(false);
+
+  /** The action currently running (for per-button spinners); null when idle. */
+  readonly aiRunning = signal<AiActionId | null>(null);
+  readonly aiBusy = computed(() => this.aiRunning() !== null);
+  readonly aiError = signal<string | null>(null);
+  /** Set true when a 403 upgrade_required comes back (plan lacks AI). */
+  readonly aiUpgrade = signal(false);
+
+  /** Caption-style preview awaiting the user's decision. */
+  readonly aiPreview = signal<CaptionPreview | null>(null);
+  /** Asset cards (hashtags/titles/SEO/CTAs) from the last 'cards' action. */
+  readonly aiCards = signal<AiOutputCard[]>([]);
+  readonly aiCardsLabel = signal<string>('');
+  /** Which provider answered last (gemini/openrouter) — small badge. */
+  readonly aiProvider = signal<string | null>(null);
+
+  /** Session history of the caption for revert/compare. */
+  readonly versions = signal<CaptionVersion[]>([]);
+
+  /** AI is globally available (on + configured). */
+  readonly aiAvailable = computed(() => this.aiConfig()?.available === true);
+  /**
+   * The customer's plan explicitly does NOT include AI. We only block when the
+   * backend resolved the plan and said no; an unknown (null) plan is treated as
+   * "let them try" — the server-side 403 is the real gate.
+   */
+  readonly aiPlanBlocked = computed(() => {
+    const c = this.aiConfig();
+    if (!c) return false;
+    if (c.planAllowed === false) return true;
+    return c.plan != null && c.planAllowed !== true;
+  });
+
+  async ngOnInit(): Promise<void> {
+    try {
+      this.aiConfig.set(await this.ai.config());
+    } catch {
+      // Probe failed (e.g. egress blocked). Leave config null — the panel shows
+      // a neutral "couldn't check" note and manual composing is unaffected.
+      this.aiConfig.set(null);
+    } finally {
+      this.aiConfigLoaded.set(true);
+    }
+  }
+
+  toggleAiPanel(): void {
+    this.aiOpen.update((v) => !v);
+  }
+
+  /** Does this caption-action have something to work on? */
+  private requireContent(): boolean {
+    if (this.text().trim().length > 0) return true;
+    this.toast.error('Nothing to work with', 'Write a caption first, then let AI refine it.');
+    return false;
+  }
+
+  /**
+   * Run an AI action. Caption actions fill `aiPreview`; asset actions fill
+   * `aiCards`. Guards: availability + (for most) non-empty caption.
+   */
+  async runAi(action: AiAction): Promise<void> {
+    if (this.aiBusy()) return;
+    if (!this.aiAvailable()) {
+      this.toast.error('AI unavailable', 'The AI assistant is turned off or not configured.');
+      return;
+    }
+    if (!this.requireContent()) return;
+
+    this.aiError.set(null);
+    this.aiUpgrade.set(false);
+    this.aiRunning.set(action.id);
+    const content = this.text().trim();
+
+    try {
+      if (action.kind === 'caption') {
+        const { text, provider } = await this.generateCaption(action.id, content);
+        this.aiProvider.set(provider);
+        this.aiPreview.set({ action, text, editing: false });
+        this.aiCards.set([]);
+        this.toast.success('Draft ready', 'Preview it, then Apply or discard.');
+      } else {
+        const { cards, label, provider } = await this.generateCards(action.id, content);
+        this.aiProvider.set(provider);
+        this.aiCards.set(cards);
+        this.aiCardsLabel.set(label);
+        this.aiPreview.set(null);
+        if (cards.length === 0) {
+          this.toast.info('Nothing generated', 'The AI returned no results — try again.');
+        } else {
+          this.toast.success('Generated', 'Copy or append the results below.');
+        }
+      }
+    } catch (e) {
+      this.handleAiError(e);
+    } finally {
+      this.aiRunning.set(null);
+    }
+  }
+
+  /** Dispatch a caption-style action to the right AiService call. */
+  private async generateCaption(
+    id: AiActionId,
+    content: string
+  ): Promise<{ text: string; provider: string }> {
+    switch (id) {
+      case 'improve': {
+        const r = await this.ai.rewrite({ content, tone: 'motivational' });
+        return { text: r.rewritten, provider: r.provider };
+      }
+      case 'professional': {
+        const r = await this.ai.rewrite({ content, tone: 'professional' });
+        return { text: r.rewritten, provider: r.provider };
+      }
+      case 'casual': {
+        const r = await this.ai.rewrite({ content, tone: 'casual' });
+        return { text: r.rewritten, provider: r.provider };
+      }
+      case 'shorten': {
+        const r = await this.ai.shorten({ content, format: 'social_post' });
+        return { text: r.shortened, provider: r.provider };
+      }
+      case 'expand': {
+        const r = await this.ai.expand({ content, format: 'long_form_post' });
+        return { text: r.expanded, provider: r.provider };
+      }
+      case 'grammar': {
+        const r = await this.ai.proofread({ content });
+        return { text: r.corrected, provider: r.provider };
+      }
+      case 'rewrite_facebook':
+      case 'rewrite_instagram':
+      case 'rewrite_x':
+      case 'rewrite_linkedin':
+      case 'rewrite_tiktok':
+      case 'rewrite_youtube': {
+        const platform = id.replace('rewrite_', '') as
+          | 'facebook'
+          | 'instagram'
+          | 'x'
+          | 'linkedin'
+          | 'tiktok'
+          | 'youtube';
+        const r = await this.ai.platformContent({ content, platforms: [platform] });
+        const res = r.result;
+        let text: string;
+        if (platform === 'youtube') {
+          text = [res.youtubeTitle, res.youtubeDescription].filter(Boolean).join('\n\n');
+        } else {
+          // res has explicit optional string keys for each non-YouTube platform.
+          text = res[platform] ?? '';
+        }
+        if (!text.trim()) throw new Error('The AI did not return content for this platform.');
+        return { text, provider: r.provider };
+      }
+      default:
+        throw new Error('This action does not produce a caption.');
+    }
+  }
+
+  /** Dispatch an asset-style action; returns copy-able cards. */
+  private async generateCards(
+    id: AiActionId,
+    content: string
+  ): Promise<{ cards: AiOutputCard[]; label: string; provider: string }> {
+    switch (id) {
+      case 'cta': {
+        const r = await this.ai.ctas({ content });
+        return {
+          label: 'Call-to-action ideas',
+          provider: r.provider,
+          cards: r.ctas.map((t, i) => ({ label: `CTA ${i + 1}`, text: t })),
+        };
+      }
+      case 'gen_hashtags': {
+        const r = await this.ai.hashtags({ content });
+        return {
+          label: 'Hashtags',
+          provider: r.provider,
+          cards: [{ label: 'Hashtags', text: r.hashtags.join(' '), items: r.hashtags }],
+        };
+      }
+      case 'gen_titles': {
+        const r = await this.ai.titles({ content });
+        return {
+          label: 'Title ideas',
+          provider: r.provider,
+          cards: r.titles.map((t, i) => ({ label: `Title ${i + 1}`, text: t })),
+        };
+      }
+      case 'yt_title': {
+        const r = await this.ai.platformContent({ content, platforms: ['youtube'] });
+        return {
+          label: 'YouTube title',
+          provider: r.provider,
+          cards: r.result.youtubeTitle
+            ? [{ label: 'YouTube title', text: r.result.youtubeTitle }]
+            : [],
+        };
+      }
+      case 'yt_description': {
+        const r = await this.ai.platformContent({ content, platforms: ['youtube'] });
+        return {
+          label: 'YouTube description',
+          provider: r.provider,
+          cards: r.result.youtubeDescription
+            ? [{ label: 'YouTube description', text: r.result.youtubeDescription }]
+            : [],
+        };
+      }
+      case 'yt_seo': {
+        const r = await this.ai.seoKeywords({ content });
+        return {
+          label: 'SEO keywords',
+          provider: r.provider,
+          cards: [{ label: 'SEO keywords', text: r.keywords.join(', '), items: r.keywords }],
+        };
+      }
+      default:
+        throw new Error('This action does not produce assets.');
+    }
+  }
+
+  // --- Preview actions (Apply / Edit / discard) ---
+
+  /** Replace the caption with the preview, saving the current text to history. */
+  applyPreview(): void {
+    const p = this.aiPreview();
+    if (!p) return;
+    this.snapshotCurrent();
+    this.text.set(p.text);
+    this.versions.update((v) => [...v, { label: labelFor(p.action), text: p.text }]);
+    this.aiPreview.set(null);
+    this.toast.success('Applied', 'Your caption was updated. You can still revert.');
+  }
+
+  /** Toggle inline editing of the preview text before applying. */
+  toggleEditPreview(): void {
+    this.aiPreview.update((p) => (p ? { ...p, editing: !p.editing } : p));
+  }
+
+  updatePreviewText(value: string): void {
+    this.aiPreview.update((p) => (p ? { ...p, text: value } : p));
+  }
+
+  discardPreview(): void {
+    this.aiPreview.set(null);
+  }
+
+  clearAiCards(): void {
+    this.aiCards.set([]);
+    this.aiCardsLabel.set('');
+  }
+
+  /** Snapshot the current caption into history exactly once (the Original). */
+  private snapshotCurrent(): void {
+    if (this.versions().length === 0) {
+      this.versions.set([{ label: 'Original', text: this.text() }]);
+    }
+  }
+
+  /** Can the caption be reverted (is there an earlier version)? */
+  readonly canRevert = computed(() => this.versions().length > 0);
+
+  /** Revert the caption to the previous version in the session history. */
+  revertCaption(): void {
+    const v = this.versions();
+    if (v.length === 0) return;
+    // Pop the latest; restore to the one before it (or the original).
+    const next = [...v];
+    const popped = next.pop()!;
+    const restoreTo = next.length > 0 ? next[next.length - 1].text : popped.text;
+    // If only the Original remains, restore to it and keep it.
+    this.text.set(next.length > 0 ? restoreTo : popped.text);
+    this.versions.set(next);
+    this.toast.info('Reverted', 'Restored the previous version of your caption.');
+  }
+
+  /** Append a card's text to the caption (e.g. hashtags, a chosen CTA/title). */
+  appendToCaption(card: AiOutputCard): void {
+    this.snapshotCurrent();
+    const current = this.text().trimEnd();
+    const sep = current.length ? '\n\n' : '';
+    const next = `${current}${sep}${card.text}`;
+    this.versions.update((v) => [...v, { label: `+ ${card.label}`, text: next }]);
+    this.text.set(next);
+    this.toast.success('Added', `${card.label} appended to your caption.`);
+  }
+
+  /** Copy arbitrary text to the clipboard. */
+  async copyText(text: string): Promise<void> {
+    try {
+      await navigator.clipboard.writeText(text);
+      this.toast.success('Copied', 'Copied to clipboard.');
+    } catch {
+      this.toast.error('Copy failed', 'Your browser blocked clipboard access.');
+    }
+  }
+
+  /** Map AI errors: a 403 upgrade_required flips to the upgrade nudge. */
+  private handleAiError(e: unknown): void {
+    const err = e as { status?: number; error?: { reason?: string; error?: string }; message?: string };
+    const upgrade = err?.status === 403 || err?.error?.reason === 'upgrade_required';
+    const msg = err?.error?.error || err?.message || 'The AI request failed. Please try again.';
+    this.aiError.set(msg);
+    if (upgrade) {
+      this.aiUpgrade.set(true);
+      const c = this.aiConfig();
+      if (c) this.aiConfig.set({ ...c, planAllowed: false });
+      this.toast.error('Upgrade required', 'The AI assistant is on the Pro and Agency plans.');
+    } else {
+      this.toast.error('AI request failed', msg);
+    }
+  }
+}
+
+/** A caption-style AI result awaiting Apply / Edit / discard. */
+interface CaptionPreview {
+  action: AiAction;
+  text: string;
+  editing: boolean;
+}
+
+/** Human label for a version-history entry derived from an action. */
+function labelFor(action: AiAction): string {
+  if (action.platform && action.id.startsWith('rewrite_')) {
+    return `Rewrite · ${action.platform}`;
+  }
+  return action.label;
 }
 
 /** A selectable account item shown on Compose. */

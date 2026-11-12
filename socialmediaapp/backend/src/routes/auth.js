@@ -55,7 +55,7 @@ router.get('/:platform/start', (req, res) => {
  */
 router.get('/:platform/callback', async (req, res) => {
   const { platform } = req.params;
-  const { code, error } = req.query;
+  const { code, error, state } = req.query;
   const log = req.log ?? logger;
 
   if (error) {
@@ -68,7 +68,11 @@ router.get('/:platform/callback', async (req, res) => {
   }
 
   try {
-    const token = await publishService.exchangeCode(platform, String(code));
+    const token = await publishService.exchangeCode(
+      platform,
+      String(code),
+      state !== undefined ? String(state) : undefined
+    );
     // Resolve who just logged in, so multiple accounts can be labelled.
     let accountId = `${platform}:${Date.now()}`;
     let label = `${platform} account`;

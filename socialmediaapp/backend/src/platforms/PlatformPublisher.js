@@ -30,8 +30,13 @@ export class PlatformPublisher {
     throw new Error(`${this.key}: getAuthUrl() not implemented`);
   }
 
-  /** Exchange an OAuth `code` for an access token. Stateless — returns to caller. */
-  async exchangeCode(_code) {
+  /**
+   * Exchange an OAuth `code` for an access token. Stateless — returns to caller.
+   * `state` is the same opaque value the adapter put in the auth URL; adapters
+   * that use PKCE (e.g. X) encode their code_verifier into it and recover it
+   * here. Adapters that don't need it simply ignore the argument.
+   */
+  async exchangeCode(_code, _state) {
     throw new Error(`${this.key}: exchangeCode() not implemented`);
   }
 
